@@ -1,8 +1,9 @@
 package utils
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDeleteEmpty(t *testing.T) {
@@ -38,9 +39,7 @@ func TestDeleteEmpty(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := DeleteEmpty(tt.args.s); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("DeleteEmpty() = %v, want %v", got, tt.want)
-			}
+			assert.Equal(t, DeleteEmpty(tt.args.s), tt.want)
 		})
 	}
 }

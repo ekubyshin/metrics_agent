@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 	"net/url"
 	"strings"
@@ -32,17 +33,16 @@ func (m *Metrics) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	_, err := m.parsePath(r.URL)
 	if err != nil {
-		switch err.(type) {
-		case types.MetricsHandlerInvalidName:
+		if errors.Is(err, types.NewMetricsHandlerInvalidNameError()) {
 			w.WriteHeader(http.StatusNotFound)
-		case types.MetricsHandlerInvalidType:
-		default:
+		} else {
 			w.WriteHeader(http.StatusBadRequest)
 		}
 		return
 	}
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("{}"))
 }
 
 func (m *Metrics) Route() string {

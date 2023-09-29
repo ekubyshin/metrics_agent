@@ -1,24 +1,38 @@
 package types
 
-import "errors"
+type MetricsHandlerInvalidType struct{}
+type MetricsHandlerInvalidName struct{}
+type MetricsHandlerInvalidValue struct{}
+type UnknownScheme struct{}
 
-type MetricsHandlerInvalidType error
-type MetricsHandlerInvalidName error
-type MetricsHandlerInvalidValue error
-type UnknownScheme error
-
-func NewMetricsHandlerInvalidTypeError() MetricsHandlerInvalidType {
-	return errors.New("invalid metrics type")
+func (e *MetricsHandlerInvalidType) Error() string {
+	return "invalid metrics type"
 }
 
-func NewMetricsHandlerInvalidNameError() MetricsHandlerInvalidName {
-	return errors.New("invalid metrics name")
+func (e *MetricsHandlerInvalidName) Error() string {
+	return "invalid metrics type"
 }
 
-func NewInvalidMetricsValue() MetricsHandlerInvalidValue {
-	return errors.New("invalid metrics value")
+func (e *MetricsHandlerInvalidValue) Error() string {
+	return "invalid metrics type"
+}
+
+func (e *UnknownScheme) Error() string {
+	return "invalid metrics type"
+}
+
+func NewMetricsHandlerInvalidTypeError() error {
+	return &MetricsHandlerInvalidType{}
+}
+
+func NewMetricsHandlerInvalidNameError() error {
+	return &MetricsHandlerInvalidName{}
+}
+
+func NewInvalidMetricsValue() error {
+	return &MetricsHandlerInvalidValue{}
 }
 
 func NewUnknowSchemeError() error {
-	return errors.New("unknown metrics scheme")
+	return &UnknownScheme{}
 }
