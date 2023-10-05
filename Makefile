@@ -8,13 +8,6 @@ agent:
 	go build -o cmd/agent/agent cmd/agent/*.go
 	chmod +x cmd/agent/agent
 
-.PHONY: ytest
-ytest:
-	cd cmd/agent && \
-	metricstest metricstest -test.v -test.run=^TestIteration2[AB]*$ \
-            -source-path=. \
-            -agent-binary-path=cmd/agent/agent
-
 .PHONY: test
 test:
 	go test ./...
