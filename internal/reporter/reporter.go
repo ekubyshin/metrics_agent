@@ -9,7 +9,7 @@ import (
 	"github.com/ekubyshin/metrics_agent/internal/collector"
 )
 
-const rootUrl = "http://localhost:8080/update"
+const rootURL = "http://localhost:8080/update"
 
 type Writer interface {
 	Write(data Report) error
@@ -38,14 +38,18 @@ func NewAgentReporter(interval time.Duration, client *http.Client) Writer {
 }
 
 func (r *AgentWriter) send(data Report) error {
-	url := fmt.Sprintf("%s/%s/%s/%s", rootUrl, data.Type, data.Name, data.Value)
+	url := fmt.Sprintf("%s/%s/%s/%s", rootURL, data.Type, data.Name, data.Value)
 	request, err := http.NewRequest(http.MethodPost, url, nil)
 
 	if err != nil {
 		return err
 	}
 
-	_, err = r.client.Do(request)
+	resp, err := r.client.Do(request)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 	return err
 }
 

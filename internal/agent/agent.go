@@ -45,10 +45,7 @@ func NewMetricsAgent(
 func (a *MetricsAgent) Start() {
 	go a.collect()
 	go a.report()
-	select {
-	case <-a.done:
-		return
-	}
+	<-a.done
 }
 
 func (a *MetricsAgent) collect() {
