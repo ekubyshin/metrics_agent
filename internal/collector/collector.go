@@ -35,11 +35,11 @@ func (r *RuntimeReader) Run() {
 	go (func() {
 		stats := runtime.MemStats{}
 		for {
-			runtime.ReadMemStats(&stats)
-			r.pollCounter += 1
 			select {
 			case r.stats <- stats:
-				time.Sleep(r.pollInterval * time.Second)
+				runtime.ReadMemStats(&stats)
+				r.pollCounter += 1
+				time.Sleep(r.pollInterval)
 			case d := <-r.done:
 				if d {
 					r.closed = true
@@ -50,6 +50,10 @@ func (r *RuntimeReader) Run() {
 			}
 		}
 	})()
+}
+
+func generateRandom() float64 {
+	return rand.Float64()
 }
 
 func (r *RuntimeReader) Read() (SystemInfo, error) {
@@ -64,7 +68,6 @@ func (r *RuntimeReader) Stop() {
 }
 
 func (r *RuntimeReader) convertToStat(st runtime.MemStats) SystemInfo {
-	randValue := rand.New(rand.NewSource(time.Now().UnixNano())).Int()
 	return SystemInfo{
 		Alloc:         types.Gauge(st.Alloc),
 		BuckHashSys:   types.Gauge(st.BuckHashSys),
@@ -92,6 +95,6 @@ func (r *RuntimeReader) convertToStat(st runtime.MemStats) SystemInfo {
 		Sys:           types.Gauge(st.Sys),
 		TotalAlloc:    types.Gauge(st.TotalAlloc),
 		PollCount:     r.pollCounter,
-		RandomValue:   types.Gauge(randValue),
+		RandomValue:   types.Gauge(generateRandom()),
 	}
 }

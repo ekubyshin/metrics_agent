@@ -12,8 +12,8 @@ import (
 const rootUrl = "http://127.0.0.1:8080/update"
 
 type Writer interface {
-	Report(data Report) error
-	ReportBatch(data []Report) []error
+	Write(data Report) error
+	WriteBatch(data []Report) []error
 }
 
 type Report struct {
@@ -26,16 +26,18 @@ type AgentWriter struct {
 	reader   collector.Reader
 	client   *http.Client
 	interval time.Duration
+	queue    chan Report
 }
 
 func NewAgentReporter(interval time.Duration, client *http.Client) Writer {
 	return &AgentWriter{
 		client:   client,
 		interval: interval,
+		queue:    make(chan Report, 100),
 	}
 }
 
-func (r *AgentWriter) Report(data Report) error {
+func (r *AgentWriter) send(data Report) error {
 	url := fmt.Sprintf("%s/%s/%s/%s", rootUrl, data.Type, data.Name, data.Value)
 	request, err := http.NewRequest(http.MethodPost, url, nil)
 
@@ -47,14 +49,18 @@ func (r *AgentWriter) Report(data Report) error {
 	return err
 }
 
-func (r *AgentWriter) ReportBatch(data []Report) []error {
+func (r *AgentWriter) Write(data Report) error {
+	return r.send(data)
+}
+
+func (r *AgentWriter) WriteBatch(data []Report) []error {
 	var wg sync.WaitGroup
 	resp := make([]error, 0, len(data))
 	for _, v := range data {
 		wg.Add(1)
 		go func(v Report) {
 			defer wg.Done()
-			err := r.Report(v)
+			err := r.Write(v)
 			if err != nil {
 				resp = append(resp, err)
 			}

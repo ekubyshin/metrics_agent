@@ -1,10 +1,12 @@
 package main
 
 import (
+	"time"
+
 	"github.com/ekubyshin/metrics_agent/internal/agent"
 )
 
 func main() {
-	metricsAgent := agent.NewMetricsAgent(2, 10)
+	metricsAgent := agent.NewMetricsAgent(10*time.Second, 2*time.Second)
 	metricsAgent.Start()
 }

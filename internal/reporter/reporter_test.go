@@ -32,7 +32,7 @@ func TestAgentReporter_Report(t *testing.T) {
 				client:   tt.fields.client,
 				interval: tt.fields.interval,
 			}
-			if err := r.Report(tt.args.data); (err != nil) != tt.wantErr {
+			if err := r.Write(tt.args.data); (err != nil) != tt.wantErr {
 				t.Errorf("AgentReporter.Report() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
