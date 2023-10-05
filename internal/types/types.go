@@ -1,4 +1,4 @@
 package types
 
-type gauge float64
-type counter int64
+type Gauge float64
+type Counter int64

@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/ekubyshin/metrics_agent/internal/types"
+	"github.com/ekubyshin/metrics_agent/internal/server/types"
 	"github.com/ekubyshin/metrics_agent/internal/utils"
 )
 
