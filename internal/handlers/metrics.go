@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/ekubyshin/metrics_agent/internal/types"
@@ -49,6 +50,16 @@ func (m *Metrics) Route() string {
 	return m.route
 }
 
+func (m *Metrics) validate(path *metricsHanlerPath) error {
+	var err error
+	if path.metricsType == "gauge" {
+		_, err = strconv.ParseFloat(path.metricsValue, 64)
+	} else if path.metricsType == "counter" {
+		_, err = strconv.ParseInt(path.metricsValue, 10, 64)
+	}
+	return err
+}
+
 func (m *Metrics) parsePath(url *url.URL) (*metricsHanlerPath, error) {
 	parts := strings.Split(url.Path, "/")
 	parts = utils.DeleteEmpty(parts)
@@ -64,9 +75,21 @@ func (m *Metrics) parsePath(url *url.URL) (*metricsHanlerPath, error) {
 		return nil, types.NewInvalidMetricsValue()
 	}
 
-	return &metricsHanlerPath{
+	if parts[1] != "gauge" && parts[1] != "counter" {
+		return nil, types.NewMetricsHandlerInvalidTypeError()
+	}
+
+	path := &metricsHanlerPath{
 		metricsType:  parts[1],
 		metricsName:  parts[2],
 		metricsValue: parts[3],
-	}, nil
+	}
+
+	err := m.validate(path)
+
+	if err != nil {
+		return nil, types.NewMetricsHandlerInvalidTypeError()
+	}
+
+	return path, nil
 }
