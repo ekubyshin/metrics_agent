@@ -68,7 +68,7 @@ func TestMetrics_parsePath(t *testing.T) {
 			},
 			args: args{
 				url: &url.URL{
-					Path: "/upload/counter/someMetric/527",
+					Path: "/update/counter/someMetric/527",
 				},
 			},
 			want: &metricsHanlerPath{
@@ -77,6 +77,32 @@ func TestMetrics_parsePath(t *testing.T) {
 				metricsValue: "527",
 			},
 			wantErr: false,
+		},
+		{
+			name: "without invalid val",
+			fields: fields{
+				route: "/update/",
+			},
+			args: args{
+				url: &url.URL{
+					Path: "/update/counter/someMetric/none",
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "invalid type",
+			fields: fields{
+				route: "/update/",
+			},
+			args: args{
+				url: &url.URL{
+					Path: "/update/none/someMetric/none",
+				},
+			},
+			want:    nil,
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -125,7 +151,7 @@ func TestMetrics_ServeHTTP(t *testing.T) {
 			name: "404",
 			fields: fields{
 				method: http.MethodPost,
-				path:   "/update/type/",
+				path:   "/update/counter/",
 			},
 			want: want{
 				code:        http.StatusNotFound,
@@ -137,7 +163,7 @@ func TestMetrics_ServeHTTP(t *testing.T) {
 			name: "404",
 			fields: fields{
 				method: http.MethodPost,
-				path:   "/update/type/name/",
+				path:   "/update/counter/name/",
 			},
 			want: want{
 				code:        http.StatusBadRequest,
@@ -146,10 +172,70 @@ func TestMetrics_ServeHTTP(t *testing.T) {
 			},
 		},
 		{
-			name: "200",
+			name: "200 counter",
 			fields: fields{
 				method: http.MethodPost,
-				path:   "/update/type/name/value/",
+				path:   "/update/counter/name/1",
+			},
+			want: want{
+				code:        http.StatusOK,
+				contentType: "application/json",
+				response:    `{}`,
+			},
+		},
+		{
+			name: "400 none",
+			fields: fields{
+				method: http.MethodPost,
+				path:   "/update/none/name/value/",
+			},
+			want: want{
+				code:        http.StatusBadRequest,
+				contentType: "application/json",
+				response:    `{}`,
+			},
+		},
+		{
+			name: "400 gauge none",
+			fields: fields{
+				method: http.MethodPost,
+				path:   "/update/gauge/name/none",
+			},
+			want: want{
+				code:        http.StatusBadRequest,
+				contentType: "application/json",
+				response:    `{}`,
+			},
+		},
+		{
+			name: "400 counter none",
+			fields: fields{
+				method: http.MethodPost,
+				path:   "/update/counter/name/none",
+			},
+			want: want{
+				code:        http.StatusBadRequest,
+				contentType: "application/json",
+				response:    `{}`,
+			},
+		},
+		{
+			name: "200 counter 1",
+			fields: fields{
+				method: http.MethodPost,
+				path:   "/update/counter/name/1",
+			},
+			want: want{
+				code:        http.StatusOK,
+				contentType: "application/json",
+				response:    `{}`,
+			},
+		},
+		{
+			name: "200 gauge 1.0",
+			fields: fields{
+				method: http.MethodPost,
+				path:   "/update/gauge/name/1.0",
 			},
 			want: want{
 				code:        http.StatusOK,
