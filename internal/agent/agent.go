@@ -23,6 +23,7 @@ type MetricsAgent struct {
 	queue           chan collector.SystemInfo
 	done            chan bool
 	batchSize       int64
+	canceled        bool
 }
 
 func NewMetricsAgent(
@@ -56,7 +57,8 @@ func (a *MetricsAgent) collect() {
 		st, err := a.collector.Read()
 		if err != nil {
 			a.done <- true
-			break
+			a.collector.Stop()
+			return
 		}
 		a.queue <- st
 	}
@@ -68,6 +70,7 @@ func (a *MetricsAgent) report() {
 	for {
 		select {
 		case <-a.done:
+			a.canceled = true
 			return
 		case st := <-a.queue:
 			count++
@@ -75,8 +78,7 @@ func (a *MetricsAgent) report() {
 				a.reporter.WriteBatch(convertSystemInfoToReport(st))
 			} else {
 				count = 0
-				defer a.report()
-				return
+				time.Sleep(a.sendInterval)
 			}
 		}
 	}
