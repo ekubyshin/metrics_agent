@@ -47,6 +47,7 @@ func Test_convertSystemInfoToReport(t *testing.T) {
 					Sys:           1.0,
 					TotalAlloc:    1.0,
 					RandomValue:   1.0,
+					PollCount:     1,
 				},
 			},
 			[]reporter.Report{
@@ -179,6 +180,11 @@ func Test_convertSystemInfoToReport(t *testing.T) {
 					Type:  "gauge",
 					Name:  "RandomValue",
 					Value: "1.0",
+				},
+				{
+					Type:  "counter",
+					Name:  "PollCount",
+					Value: "1",
 				},
 			},
 		},

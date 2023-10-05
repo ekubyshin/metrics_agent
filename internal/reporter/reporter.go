@@ -9,7 +9,7 @@ import (
 	"github.com/ekubyshin/metrics_agent/internal/collector"
 )
 
-const rootUrl = "http://127.0.0.1:8080/update"
+const rootUrl = "http://localhost:8080/update"
 
 type Writer interface {
 	Write(data Report) error
