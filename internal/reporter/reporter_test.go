@@ -1,39 +1,39 @@
 package reporter
 
 import (
-	"net/http"
+	"reflect"
 	"testing"
-	"time"
-
-	"github.com/ekubyshin/metrics_agent/internal/collector"
 )
 
-func TestAgentReporter_Report(t *testing.T) {
-	type fields struct {
-		reader   collector.Reader
-		client   *http.Client
-		interval time.Duration
-	}
+func Test_reportToMap(t *testing.T) {
 	type args struct {
 		data Report
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
+		name string
+		args args
+		want map[string]string
 	}{
-		// TODO: Add test cases.
+		{
+			"check full",
+			args{
+				Report{
+					Type:  "gauge",
+					Name:  "some",
+					Value: "1.0",
+				},
+			},
+			map[string]string{
+				"type":  "gauge",
+				"name":  "some",
+				"value": "1.0",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := &AgentWriter{
-				reader:   tt.fields.reader,
-				client:   tt.fields.client,
-				interval: tt.fields.interval,
-			}
-			if err := r.Write(tt.args.data); (err != nil) != tt.wantErr {
-				t.Errorf("AgentReporter.Report() error = %v, wantErr %v", err, tt.wantErr)
+			if got := reportToMap(tt.args.data); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("reportToMap() = %v, want %v", got, tt.want)
 			}
 		})
 	}

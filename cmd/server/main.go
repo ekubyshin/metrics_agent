@@ -1,16 +1,12 @@
 package main
 
 import (
-	"net/http"
-
-	"github.com/ekubyshin/metrics_agent/internal/handlers"
+	"github.com/ekubyshin/metrics_agent/internal/server"
 )
 
 func main() {
-	router := http.NewServeMux()
-	metricsHandler := handlers.NewMetricsHandler()
-	router.Handle(metricsHandler.Route(), metricsHandler)
-	err := http.ListenAndServe("localhost:8080", router)
+	srv := server.NewServer()
+	err := srv.Run()
 	if err != nil {
 		panic(err)
 	}

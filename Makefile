@@ -14,8 +14,12 @@ agent:
 
 .PHONY: test
 test:
-	go test ./...
+	go test ./... -v -cover 
 
 .PHONY: lint
 lint: $(GOLANGCI_BIN) ## go lint
 	$(GOLANGCI_BIN) run --fix ./...
+
+.PHONE: ytest
+ytest: $(METRICSTEST)
+	$(METRICSTEST) '-test.v' '-test.run=^TestIteration3[AB]*$\' '-source-path=.' '-agent-binary-path=cmd/agent/agent' '-binary-path=cmd/server/server'

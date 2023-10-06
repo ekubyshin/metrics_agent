@@ -9,6 +9,7 @@ import (
 
 	"github.com/ekubyshin/metrics_agent/internal/collector"
 	"github.com/ekubyshin/metrics_agent/internal/reporter"
+	"github.com/go-resty/resty/v2"
 )
 
 type Agent interface {
@@ -30,7 +31,7 @@ func NewMetricsAgent(
 	sendInterval time.Duration,
 	refreshInterval time.Duration) Agent {
 	colector := collector.NewRuntimeReader(refreshInterval)
-	client := reporter.NewReporterClient()
+	client := resty.New()
 	reporter := reporter.NewAgentReporter(sendInterval, client)
 	return &MetricsAgent{
 		reporter:        reporter,

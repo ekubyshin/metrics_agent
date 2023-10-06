@@ -1,15 +1,16 @@
 package reporter
 
 import (
-	"fmt"
-	"net/http"
+	"reflect"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/ekubyshin/metrics_agent/internal/collector"
+	"github.com/go-resty/resty/v2"
 )
 
-const rootURL = "http://localhost:8080/update"
+const rootURL = "http://localhost:8080/update/{Type}/{Name}/{Value}"
 
 type Writer interface {
 	Write(data Report) error
@@ -24,12 +25,12 @@ type Report struct {
 
 type AgentWriter struct {
 	reader   collector.Reader
-	client   *http.Client
+	client   *resty.Client
 	interval time.Duration
 	queue    chan Report
 }
 
-func NewAgentReporter(interval time.Duration, client *http.Client) Writer {
+func NewAgentReporter(interval time.Duration, client *resty.Client) Writer {
 	return &AgentWriter{
 		client:   client,
 		interval: interval,
@@ -38,23 +39,29 @@ func NewAgentReporter(interval time.Duration, client *http.Client) Writer {
 }
 
 func (r *AgentWriter) send(data Report) error {
-	url := fmt.Sprintf("%s/%s/%s/%s", rootURL, data.Type, data.Name, data.Value)
-	request, err := http.NewRequest(http.MethodPost, url, nil)
+
+	_, err := r.client.R().SetPathParams(reportToMap(data)).Get(rootURL)
 
 	if err != nil {
 		return err
 	}
 
-	resp, err := r.client.Do(request)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
 	return err
 }
 
 func (r *AgentWriter) Write(data Report) error {
 	return r.send(data)
+}
+
+func reportToMap(data Report) map[string]string {
+	res := make(map[string]string)
+	v := reflect.ValueOf(data)
+	for f := 0; f < v.NumField(); f++ {
+		field := v.Field(f)
+		fieldName := strings.ToLower(v.Type().Field(f).Name)
+		res[fieldName] = strings.ToLower(field.String())
+	}
+	return res
 }
 
 func (r *AgentWriter) WriteBatch(data []Report) []error {
