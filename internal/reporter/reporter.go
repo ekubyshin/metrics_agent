@@ -40,7 +40,7 @@ func NewAgentReporter(interval time.Duration, client *resty.Client, endpoint str
 
 func (r *AgentWriter) send(data Report) error {
 
-	_, err := r.client.R().SetPathParams(reportToMap(data)).Get(r.endpoint + path)
+	_, err := r.client.R().SetPathParams(reportToMap(data)).Get("http://" + r.endpoint + path)
 
 	if err != nil {
 		return err
