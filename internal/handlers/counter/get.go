@@ -33,7 +33,6 @@ func (m *CounterGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			c := int64(v)
 			_, err := w.Write([]byte(strconv.FormatInt(c, 10)))
 			if err == nil {
-				w.WriteHeader(http.StatusOK)
 				return
 			}
 		}

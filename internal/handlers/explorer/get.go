@@ -35,7 +35,6 @@ func (e *ExplorerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		_, err = w.Write(res)
 		if err == nil {
-			w.WriteHeader(http.StatusOK)
 			return
 		}
 	}
