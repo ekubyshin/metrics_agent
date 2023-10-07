@@ -35,9 +35,6 @@ func NewServer() Server {
 		r.Get(gaugeGetHandler.BaseURL(), gaugeGetHandler.ServeHTTP)
 		r.Get(counterGetHanlder.BaseURL(), counterGetHanlder.ServeHTTP)
 	})
-	router.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusBadRequest)
-	})
 	return &ChiServer{
 		router: router,
 	}

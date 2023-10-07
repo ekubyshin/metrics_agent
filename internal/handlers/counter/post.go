@@ -17,7 +17,7 @@ type CounterPostHandler struct {
 
 func NewCounterPostHandler(db storage.Storage) handlers.Handler {
 	return &CounterPostHandler{
-		route: "/counter/{name}/{value:^[0-9]+}",
+		route: "/counter/{name}/{value}",
 		db:    db,
 	}
 }
