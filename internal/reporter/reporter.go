@@ -6,7 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ekubyshin/metrics_agent/internal/collector"
 	"github.com/go-resty/resty/v2"
 )
 
@@ -24,7 +23,6 @@ type Report struct {
 }
 
 type AgentWriter struct {
-	reader   collector.Reader
 	client   *resty.Client
 	interval time.Duration
 	queue    chan Report

@@ -1,20 +1,23 @@
-package handlers
+package counter
 
 import (
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/ekubyshin/metrics_agent/internal/handlers"
+	"github.com/ekubyshin/metrics_agent/internal/storage"
+	"github.com/ekubyshin/metrics_agent/internal/types"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestCounterHandler_ServeHTTP(t *testing.T) {
 	type fields struct {
 		route  string
 		method string
+		value  types.Counter
+		key    string
 	}
 	type want struct {
 		code        int
@@ -79,11 +82,27 @@ func TestCounterHandler_ServeHTTP(t *testing.T) {
 			fields{
 				route:  "/counter/someCounter/1",
 				method: "POST",
+				value:  1,
+				key:    "someCounter",
 			},
 			want{
 				code:        http.StatusOK,
-				contentType: "application/json",
+				contentType: "",
 				response:    `1`,
+			},
+		},
+		{
+			"test 200",
+			fields{
+				route:  "/counter/someCounter/1234",
+				method: "POST",
+				value:  1234,
+				key:    "someCounter",
+			},
+			want{
+				code:        http.StatusOK,
+				contentType: "",
+				response:    `1234`,
 			},
 		},
 	}
@@ -91,17 +110,18 @@ func TestCounterHandler_ServeHTTP(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			request := httptest.NewRequest(tt.fields.method, tt.fields.route, nil)
 			router := chi.NewMux()
-			m := NewCounterHandler()
+			st := storage.NewMemoryStorage()
+			m := NewCounterPostHandler(st)
 			w := httptest.NewRecorder()
 			router.Post(m.BaseURL(), m.ServeHTTP)
 			router.ServeHTTP(w, request)
 			res := w.Result()
 			assert.Equal(t, tt.want.code, res.StatusCode)
 			defer res.Body.Close()
-			resBody, err := io.ReadAll(res.Body)
-			require.NoError(t, err)
 			if res.StatusCode == http.StatusOK {
-				assert.JSONEq(t, tt.want.response, string(resBody))
+				v, err := st.Get(handlers.Key{Type: "counter", Name: tt.fields.key})
+				assert.NoError(t, err)
+				assert.Equal(t, tt.fields.value, v)
 				assert.Equal(t, tt.want.contentType, res.Header.Get("Content-Type"))
 			}
 		})
