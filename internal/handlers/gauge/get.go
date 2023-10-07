@@ -28,7 +28,6 @@ func (m *GaugeGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	w.Header().Add("Content-Type", "application/json")
 	if rv, ok := m.db.Get(handlers.Key{Type: "gauge", Name: paramName}); ok == nil {
 		if v, ok2 := rv.(types.Gauge); ok2 {
 			_, err := w.Write([]byte(strconv.FormatFloat(float64(v), 'f', -1, 64)))

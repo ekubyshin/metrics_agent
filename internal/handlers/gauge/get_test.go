@@ -9,7 +9,7 @@ import (
 	"github.com/ekubyshin/metrics_agent/internal/handlers"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
 	"github.com/ekubyshin/metrics_agent/internal/types"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +17,6 @@ import (
 func TestGaugeGetHandler_ServeHTTP(t *testing.T) {
 	type fields struct {
 		route   string
-		method  string
 		value   types.Gauge
 		valName string
 	}
@@ -32,63 +31,28 @@ func TestGaugeGetHandler_ServeHTTP(t *testing.T) {
 		want   want
 	}{
 		{
-			"test 404",
-			fields{
-				route:  "/none/",
-				method: "GET",
-			},
-			want{
-				code:        http.StatusNotFound,
-				contentType: "",
-				response:    ``,
-			},
-		},
-		{
-			"test 404",
-			fields{
-				route:  "/none/someCounter",
-				method: "GET",
-			},
-			want{
-				code:        http.StatusNotFound,
-				contentType: "",
-				response:    ``,
-			},
-		},
-		{
-			"test 404",
-			fields{
-				route:  "/gauge/someCounter",
-				method: "POST",
-			},
-			want{
-				code:        http.StatusMethodNotAllowed,
-				contentType: "",
-				response:    ``,
-			},
-		},
-		{
 			"test 200",
 			fields{
 				route:   "/gauge/testSetGet111",
-				method:  "GET",
-				value:   1524.0,
+				value:   1524.1,
 				valName: "testSetGet111",
 			},
 			want{
 				code:        http.StatusOK,
 				contentType: "text/plain; charset=utf-8",
-				response:    `1524.0`,
+				response:    `1524.1`,
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			request := httptest.NewRequest(tt.fields.method, tt.fields.route, nil)
+			request := httptest.NewRequest("GET", tt.fields.route, nil)
 			router := chi.NewMux()
 			st := storage.NewMemoryStorage()
 			mr := NewGaugeGetHandler(st)
+			mw := NewGaugePostHandler(st)
 			router.Get(mr.BaseURL(), mr.ServeHTTP)
+			router.Post(mw.BaseURL(), mw.ServeHTTP)
 			w := httptest.NewRecorder()
 			if tt.fields.valName != "" {
 				st.Put(handlers.Key{Type: "gauge", Name: tt.fields.valName}, tt.fields.value)

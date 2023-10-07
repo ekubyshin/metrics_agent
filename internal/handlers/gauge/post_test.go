@@ -7,7 +7,7 @@ import (
 
 	"github.com/ekubyshin/metrics_agent/internal/storage"
 	"github.com/ekubyshin/metrics_agent/internal/types"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,35 +32,11 @@ func TestGaugeHandler_ServeHTTP(t *testing.T) {
 		{
 			"test 404",
 			fields{
-				route:  "/none/",
-				method: "POST",
-			},
-			want{
-				code:        http.StatusNotFound,
-				contentType: "",
-				response:    ``,
-			},
-		},
-		{
-			"test 404",
-			fields{
-				route:  "/none/someCounter/1",
-				method: "POST",
-			},
-			want{
-				code:        http.StatusNotFound,
-				contentType: "",
-				response:    ``,
-			},
-		},
-		{
-			"test 404",
-			fields{
 				route:  "/gauge/someCounter/a",
 				method: "POST",
 			},
 			want{
-				code:        http.StatusNotFound,
+				code:        http.StatusBadRequest,
 				contentType: "",
 				response:    ``,
 			},

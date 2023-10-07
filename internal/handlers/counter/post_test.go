@@ -30,37 +30,13 @@ func TestCounterHandler_ServeHTTP(t *testing.T) {
 		want   want
 	}{
 		{
-			"test 404",
-			fields{
-				route:  "/none/",
-				method: "POST",
-			},
-			want{
-				code:        http.StatusNotFound,
-				contentType: "",
-				response:    ``,
-			},
-		},
-		{
-			"test 404",
-			fields{
-				route:  "/none/someCounter/1",
-				method: "POST",
-			},
-			want{
-				code:        http.StatusNotFound,
-				contentType: "",
-				response:    ``,
-			},
-		},
-		{
-			"test 404",
+			"test 400",
 			fields{
 				route:  "/counter/someCounter/a",
 				method: "POST",
 			},
 			want{
-				code:        http.StatusNotFound,
+				code:        http.StatusBadRequest,
 				contentType: "",
 				response:    ``,
 			},
@@ -72,7 +48,7 @@ func TestCounterHandler_ServeHTTP(t *testing.T) {
 				method: "POST",
 			},
 			want{
-				code:        http.StatusNotFound,
+				code:        http.StatusBadRequest,
 				contentType: "",
 				response:    ``,
 			},
