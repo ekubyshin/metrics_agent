@@ -17,7 +17,7 @@ type GaugePostHandler struct {
 
 func NewGaugePostHandler(db storage.Storage) handlers.Handler {
 	return &GaugePostHandler{
-		route: "/gauge/{name}/{value:^[0-9]+\\.[0-9]+}",
+		route: "/gauge/{name}/{value:^[0-9]+\\.?[0-9]*}",
 		db:    db,
 	}
 }
