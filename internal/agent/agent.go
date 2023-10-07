@@ -28,18 +28,20 @@ type MetricsAgent struct {
 }
 
 func NewMetricsAgent(
-	sendInterval time.Duration,
-	refreshInterval time.Duration) Agent {
-	colector := collector.NewRuntimeReader(refreshInterval)
+	reportInterval time.Duration,
+	pollInterval time.Duration,
+	endpoint string,
+) Agent {
+	colector := collector.NewRuntimeReader(pollInterval)
 	client := resty.New()
-	reporter := reporter.NewAgentReporter(sendInterval, client)
+	reporter := reporter.NewAgentReporter(reportInterval, client, endpoint)
 	return &MetricsAgent{
 		reporter:        reporter,
 		collector:       colector,
-		sendInterval:    sendInterval,
-		refreshInterval: refreshInterval,
+		sendInterval:    reportInterval,
+		refreshInterval: pollInterval,
 		queue:           make(chan collector.SystemInfo, 100),
-		batchSize:       int64(math.Ceil(float64(sendInterval) / float64(refreshInterval))),
+		batchSize:       int64(math.Ceil(float64(reportInterval) / float64(pollInterval))),
 	}
 }
 

@@ -15,10 +15,11 @@ type Server interface {
 }
 
 type ChiServer struct {
-	router *chi.Mux
+	router   *chi.Mux
+	endpoint string
 }
 
-func NewServer() Server {
+func NewServer(endpoint string) Server {
 	db := storage.NewMemoryStorage()
 	router := chi.NewRouter()
 	gaugePostHandler := gauge.NewGaugePostHandler(db)
@@ -49,27 +50,16 @@ func NewServer() Server {
 			w.WriteHeader(http.StatusNotImplemented)
 		}
 	})
-	// router.Route("/update", func(r chi.Router) {
-	// 	r.Post("/{a}/{b}/", func(w http.ResponseWriter, r *http.Request) {
-	// 		b := chi.URLParam(r, "b")
-	// 		if b != "gauge" && b != "counter" {
-	// 			w.WriteHeader(http.StatusNotImplemented)
-	// 			return
-	// 		}
-	// 		w.WriteHeader(http.StatusNotFound)
-	// 	})
-	// 	r.Post(gaugePostHandler.BaseURL(), gaugePostHandler.ServeHTTP)
-	// 	r.Post(counterPostHandler.BaseURL(), counterPostHandler.ServeHTTP)
-	// })
 	router.Route("/value", func(r chi.Router) {
 		r.Get(gaugeGetHandler.BaseURL(), gaugeGetHandler.ServeHTTP)
 		r.Get(counterGetHanlder.BaseURL(), counterGetHanlder.ServeHTTP)
 	})
 	return &ChiServer{
-		router: router,
+		router:   router,
+		endpoint: endpoint,
 	}
 }
 
 func (s *ChiServer) Run() error {
-	return http.ListenAndServe(":8080", s.router)
+	return http.ListenAndServe(s.endpoint, s.router)
 }

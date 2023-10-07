@@ -9,7 +9,7 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
-const rootURL = "http://localhost:8080/update/{Type}/{Name}/{Value}"
+const path = "/update/{Type}/{Name}/{Value}"
 
 type Writer interface {
 	Write(data Report) error
@@ -26,19 +26,21 @@ type AgentWriter struct {
 	client   *resty.Client
 	interval time.Duration
 	queue    chan Report
+	endpoint string
 }
 
-func NewAgentReporter(interval time.Duration, client *resty.Client) Writer {
+func NewAgentReporter(interval time.Duration, client *resty.Client, endpoint string) Writer {
 	return &AgentWriter{
 		client:   client,
 		interval: interval,
+		endpoint: endpoint,
 		queue:    make(chan Report, 100),
 	}
 }
 
 func (r *AgentWriter) send(data Report) error {
 
-	_, err := r.client.R().SetPathParams(reportToMap(data)).Get(rootURL)
+	_, err := r.client.R().SetPathParams(reportToMap(data)).Get(r.endpoint + path)
 
 	if err != nil {
 		return err

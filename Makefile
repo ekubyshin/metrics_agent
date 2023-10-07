@@ -28,4 +28,4 @@ lint: $(GOLANGCI_BIN) ## go lint
 
 .PHONE: ytest
 ytest: $(METRICSTEST)
-	$(METRICSTEST) '-test.v' '-test.run=^TestIteration3[AB]*$\' '-source-path=.' '-agent-binary-path=cmd/agent/agent' '-binary-path=cmd/server/server'
+	$(METRICSTEST) '-test.v' '-test.run=^TestIteration4$\' '-source-path=.' '-agent-binary-path=cmd/agent/agent' '-binary-path=cmd/server/server' '-server-port=8080'
