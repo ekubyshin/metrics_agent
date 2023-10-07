@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/ekubyshin/metrics_agent/internal/handlers/counter"
+	"github.com/ekubyshin/metrics_agent/internal/handlers/explorer"
 	"github.com/ekubyshin/metrics_agent/internal/handlers/gauge"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
 	"github.com/go-chi/chi/v5"
@@ -24,6 +25,8 @@ func NewServer() Server {
 	counterPostHandler := counter.NewCounterPostHandler(db)
 	gaugeGetHandler := gauge.NewGaugeGetHandler(db)
 	counterGetHanlder := counter.NewCounterGetHandler(db)
+	listHanlder := explorer.NewExplorerHandler(db)
+	router.Get(listHanlder.BaseURL(), listHanlder.ServeHTTP)
 	router.Route("/update", func(r chi.Router) {
 		r.Post(gaugePostHandler.BaseURL(), gaugePostHandler.ServeHTTP)
 		r.Post(counterPostHandler.BaseURL(), counterPostHandler.ServeHTTP)

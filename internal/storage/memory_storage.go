@@ -29,3 +29,15 @@ func (m *MemStorage) Get(key any) (any, error) {
 func (m *MemStorage) Delete(key any) {
 	m.data.Delete(key)
 }
+
+func (m *MemStorage) List() []KeyValuer {
+	arr := make([]KeyValuer, 0, 100)
+	m.data.Range(func(key, value any) bool {
+		if key != nil && key != "" && value != nil {
+			arr = append(arr, KeyValuer{Key: key, Value: value})
+			return true
+		}
+		return false
+	})
+	return arr
+}

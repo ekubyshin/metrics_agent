@@ -39,7 +39,6 @@ func (m *GaugeGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	w.WriteHeader(http.StatusNotFound)
-	w.Write([]byte("0"))
 }
 
 func (m *GaugeGetHandler) BaseURL() string {

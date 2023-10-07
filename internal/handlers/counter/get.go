@@ -39,7 +39,6 @@ func (m *CounterGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	w.WriteHeader(http.StatusNotFound)
-	w.Write([]byte("0"))
 }
 
 func (m *CounterGetHandler) BaseURL() string {
