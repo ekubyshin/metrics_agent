@@ -27,10 +27,40 @@ func NewServer() Server {
 	counterGetHanlder := counter.NewCounterGetHandler(db)
 	listHanlder := explorer.NewExplorerHandler(db)
 	router.Get(listHanlder.BaseURL(), listHanlder.ServeHTTP)
-	router.Route("/update", func(r chi.Router) {
-		r.Post(gaugePostHandler.BaseURL(), gaugePostHandler.ServeHTTP)
-		r.Post(counterPostHandler.BaseURL(), counterPostHandler.ServeHTTP)
+	router.Post("/update/{type}/{name}/{value}", func(w http.ResponseWriter, r *http.Request) {
+		t := chi.URLParam(r, "type")
+		switch t {
+		case "gauge":
+			gaugePostHandler.ServeHTTP(w, r)
+		case "counter":
+			counterPostHandler.ServeHTTP(w, r)
+		default:
+			w.WriteHeader(http.StatusNotImplemented)
+		}
 	})
+	router.Post("/update/{type}/", func(w http.ResponseWriter, r *http.Request) {
+		t := chi.URLParam(r, "type")
+		switch t {
+		case "gauge":
+			w.WriteHeader(http.StatusNotFound)
+		case "counter":
+			w.WriteHeader(http.StatusNotFound)
+		default:
+			w.WriteHeader(http.StatusNotImplemented)
+		}
+	})
+	// router.Route("/update", func(r chi.Router) {
+	// 	r.Post("/{a}/{b}/", func(w http.ResponseWriter, r *http.Request) {
+	// 		b := chi.URLParam(r, "b")
+	// 		if b != "gauge" && b != "counter" {
+	// 			w.WriteHeader(http.StatusNotImplemented)
+	// 			return
+	// 		}
+	// 		w.WriteHeader(http.StatusNotFound)
+	// 	})
+	// 	r.Post(gaugePostHandler.BaseURL(), gaugePostHandler.ServeHTTP)
+	// 	r.Post(counterPostHandler.BaseURL(), counterPostHandler.ServeHTTP)
+	// })
 	router.Route("/value", func(r chi.Router) {
 		r.Get(gaugeGetHandler.BaseURL(), gaugeGetHandler.ServeHTTP)
 		r.Get(counterGetHanlder.BaseURL(), counterGetHanlder.ServeHTTP)
