@@ -22,8 +22,8 @@ func TestAddress_UnmarshalText(t *testing.T) {
 			"localhost:8080",
 			false,
 			&Address{
-				&host,
-				&port,
+				host,
+				port,
 			},
 		},
 		{
@@ -59,47 +59,54 @@ func TestAddress_Config(t *testing.T) {
 	poll := time.Duration(2) * time.Second
 	report := time.Duration(10) * time.Second
 	tests := []struct {
-		name string
-		env  *map[string]string
-		want *Config
+		name    string
+		env     map[string]string
+		want    Config
+		wantErr bool
 	}{
 		{
 			"should parse correct",
-			&map[string]string{
+			map[string]string{
 				"ADDRESS":         "localhost:8080",
 				"POLL_INTERVAL":   "2",
 				"REPORT_INTERVAL": "10",
 			},
-			&Config{
-				Address: &Address{
-					Host: &host,
-					Port: &port,
+			Config{
+				Address: Address{
+					Host: host,
+					Port: port,
 				},
-				PollInterval:   &poll,
-				ReportInterval: &report,
+				PollInterval:   poll,
+				ReportInterval: report,
 			},
+			false,
 		},
 		{
 			"should parse correct",
-			&map[string]string{
+			map[string]string{
 				"ADDRESS": "localhost:8080",
 			},
-			&Config{
-				Address: &Address{
-					Host: &host,
-					Port: &port,
+			Config{
+				Address: Address{
+					Host: host,
+					Port: port,
 				},
 			},
+			false,
+		},
+		{
+			"should return empty",
+			map[string]string{},
+			Config{},
+			false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.env != nil {
-				for k, v := range *tt.env {
-					os.Setenv(k, v)
-				}
+			for k, v := range tt.env {
+				os.Setenv(k, v)
 			}
-			cfg := NewConfig()
+			cfg := NewConfigFromENV()
 			assert.Equal(t, tt.want, cfg)
 			os.Clearenv()
 		})
