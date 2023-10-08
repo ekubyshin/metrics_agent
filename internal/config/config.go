@@ -12,7 +12,7 @@ import (
 	"github.com/ekubyshin/metrics_agent/internal/utils"
 )
 
-var regExp = regexp.MustCompile(`^\w+:[0-9]{4}$`)
+var regExp = regexp.MustCompile(`^\w+:[0-9]{2,5}$`)
 
 type config struct {
 	Address        *Address `env:"ADDRESS"`
