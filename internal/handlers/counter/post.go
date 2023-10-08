@@ -12,10 +12,10 @@ import (
 
 type CounterPostHandler struct {
 	route string
-	db    storage.Storage
+	db    storage.Storage[handlers.Key, any]
 }
 
-func NewCounterPostHandler(db storage.Storage) handlers.Handler {
+func NewCounterPostHandler(db storage.Storage[handlers.Key, any]) handlers.Handler {
 	return &CounterPostHandler{
 		route: "/counter/{name}/{value}",
 		db:    db,
@@ -23,8 +23,8 @@ func NewCounterPostHandler(db storage.Storage) handlers.Handler {
 }
 
 func (m *CounterPostHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	paramName := chi.URLParam(r, "name")
-	paramValue := chi.URLParam(r, "value")
+	paramName := chi.URLParam(r, handlers.ParamNameKey)
+	paramValue := chi.URLParam(r, handlers.ParamValueKey)
 	if paramName == "" || paramValue == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -34,8 +34,8 @@ func (m *CounterPostHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	key := handlers.Key{Type: "counter", Name: paramName}
-	if v, ok := m.db.Get(key); ok == nil {
+	key := handlers.Key{Type: handlers.CounterActionKey, Name: paramName}
+	if v, ok := m.db.Get(key); ok {
 		if pv, ok2 := v.(types.Counter); ok2 {
 			m.db.Put(key, types.Counter(parsedValue)+pv)
 		}

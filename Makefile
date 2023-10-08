@@ -20,7 +20,7 @@ run-server:
 
 .PHONY: test
 test:
-	go test ./... -v -cover 
+	go clean -testcache && go test ./... -v -cover 
 
 .PHONY: lint
 lint: $(GOLANGCI_BIN) ## go lint

@@ -116,7 +116,7 @@ func NewConfigFromFlags() Config {
 	flag.Parse()
 	builer := NewBuilder()
 	address := &Address{}
-	address.UnmarshalText([]byte(*endpoint))
+	_ = address.UnmarshalText([]byte(*endpoint))
 	return builer.
 		WithAddress(*address).
 		WithPollInterval(*pollInterval).

@@ -3,6 +3,7 @@ package server
 import (
 	"net/http"
 
+	"github.com/ekubyshin/metrics_agent/internal/handlers"
 	"github.com/ekubyshin/metrics_agent/internal/handlers/counter"
 	"github.com/ekubyshin/metrics_agent/internal/handlers/explorer"
 	"github.com/ekubyshin/metrics_agent/internal/handlers/gauge"
@@ -20,7 +21,7 @@ type ChiServer struct {
 }
 
 func NewServer(endpoint string) Server {
-	db := storage.NewMemoryStorage()
+	db := storage.NewMemoryStorage[handlers.Key, any]()
 	router := chi.NewRouter()
 	gaugePostHandler := gauge.NewGaugePostHandler(db)
 	counterPostHandler := counter.NewCounterPostHandler(db)
@@ -29,22 +30,22 @@ func NewServer(endpoint string) Server {
 	listHanlder := explorer.NewExplorerHandler(db)
 	router.Get(listHanlder.BaseURL(), listHanlder.ServeHTTP)
 	router.Post("/update/{type}/{name}/{value}", func(w http.ResponseWriter, r *http.Request) {
-		t := chi.URLParam(r, "type")
+		t := chi.URLParam(r, handlers.ParamTypeKey)
 		switch t {
-		case "gauge":
+		case handlers.GaugeActionKey:
 			gaugePostHandler.ServeHTTP(w, r)
-		case "counter":
+		case handlers.CounterActionKey:
 			counterPostHandler.ServeHTTP(w, r)
 		default:
 			w.WriteHeader(http.StatusNotImplemented)
 		}
 	})
 	router.Post("/update/{type}/", func(w http.ResponseWriter, r *http.Request) {
-		t := chi.URLParam(r, "type")
+		t := chi.URLParam(r, handlers.ParamTypeKey)
 		switch t {
-		case "gauge":
+		case handlers.GaugeActionKey:
 			w.WriteHeader(http.StatusNotFound)
-		case "counter":
+		case handlers.CounterActionKey:
 			w.WriteHeader(http.StatusNotFound)
 		default:
 			w.WriteHeader(http.StatusNotImplemented)

@@ -12,10 +12,10 @@ import (
 
 type GaugePostHandler struct {
 	route string
-	db    storage.Storage
+	db    storage.Storage[handlers.Key, any]
 }
 
-func NewGaugePostHandler(db storage.Storage) handlers.Handler {
+func NewGaugePostHandler(db storage.Storage[handlers.Key, any]) handlers.Handler {
 	return &GaugePostHandler{
 		route: "/gauge/{name}/{value}",
 		db:    db,
@@ -23,14 +23,14 @@ func NewGaugePostHandler(db storage.Storage) handlers.Handler {
 }
 
 func (m *GaugePostHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	paramName := chi.URLParam(r, "name")
-	paramValue := chi.URLParam(r, "value")
+	paramName := chi.URLParam(r, handlers.ParamNameKey)
+	paramValue := chi.URLParam(r, handlers.ParamValueKey)
 	parsedValue, err := strconv.ParseFloat(paramValue, 64)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	m.db.Put(handlers.Key{Type: "gauge", Name: paramName}, types.Gauge(parsedValue))
+	m.db.Put(handlers.Key{Type: handlers.GaugeActionKey, Name: paramName}, types.Gauge(parsedValue))
 	w.WriteHeader(http.StatusOK)
 }
 

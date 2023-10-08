@@ -10,10 +10,10 @@ import (
 
 type ExplorerHandler struct {
 	route string
-	db    storage.Storage
+	db    storage.Storage[handlers.Key, any]
 }
 
-func NewExplorerHandler(db storage.Storage) handlers.Handler {
+func NewExplorerHandler(db storage.Storage[handlers.Key, any]) handlers.Handler {
 	return &ExplorerHandler{
 		route: "/",
 		db:    db,
@@ -25,9 +25,7 @@ func (e *ExplorerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	out := make(map[string]any)
 	if len(elems) > 0 {
 		for _, v := range elems {
-			if key, ok := v.Key.(handlers.Key); ok {
-				out[key.Name] = v.Value
-			}
+			out[v.Key.Name] = v.Value
 		}
 	}
 	res, err := json.Marshal(out)

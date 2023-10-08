@@ -1,13 +1,13 @@
 package storage
 
-type KeyValuer struct {
-	Key   any
-	Value any
+type KeyValuer[K any, V any] struct {
+	Key   K
+	Value V
 }
 
-type Storage interface {
-	Put(any, any)
-	Get(any) (any, error)
-	Delete(any)
-	List() []KeyValuer
+type Storage[K any, V any] interface {
+	Put(K, V)
+	Get(K) (V, bool)
+	Delete(K)
+	List() []KeyValuer[K, V]
 }

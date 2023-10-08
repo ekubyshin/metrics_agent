@@ -48,14 +48,14 @@ func TestGaugeGetHandler_ServeHTTP(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			request := httptest.NewRequest("GET", tt.fields.route, nil)
 			router := chi.NewMux()
-			st := storage.NewMemoryStorage()
+			st := storage.NewMemoryStorage[handlers.Key, any]()
 			mr := NewGaugeGetHandler(st)
 			mw := NewGaugePostHandler(st)
 			router.Get(mr.BaseURL(), mr.ServeHTTP)
 			router.Post(mw.BaseURL(), mw.ServeHTTP)
 			w := httptest.NewRecorder()
 			if tt.fields.valName != "" {
-				st.Put(handlers.Key{Type: "gauge", Name: tt.fields.valName}, tt.fields.value)
+				st.Put(handlers.Key{Type: handlers.GaugeActionKey, Name: tt.fields.valName}, tt.fields.value)
 			}
 			router.ServeHTTP(w, request)
 			res := w.Result()

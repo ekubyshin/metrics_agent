@@ -88,7 +88,7 @@ func TestExplorerHandler_ServeHTTP(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			request := httptest.NewRequest("GET", "/", nil)
 			router := chi.NewMux()
-			st := storage.NewMemoryStorage()
+			st := storage.NewMemoryStorage[handlers.Key, any]()
 			mr := NewExplorerHandler(st)
 			w := httptest.NewRecorder()
 			for _, v := range tt.args {

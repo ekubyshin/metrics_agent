@@ -11,3 +11,11 @@ type Key struct {
 	Type string
 	Name string
 }
+
+const (
+	GaugeActionKey   = "gauge"
+	CounterActionKey = "counter"
+	ParamTypeKey     = "type"
+	ParamNameKey     = "name"
+	ParamValueKey    = "value"
+)
