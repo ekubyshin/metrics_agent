@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ekubyshin/metrics_agent/internal/collector"
+	"github.com/ekubyshin/metrics_agent/internal/config"
 	"github.com/ekubyshin/metrics_agent/internal/reporter"
 	"github.com/go-resty/resty/v2"
 )
@@ -17,31 +18,29 @@ type Agent interface {
 }
 
 type MetricsAgent struct {
-	reporter        reporter.Writer
-	collector       collector.Reader
-	sendInterval    time.Duration
-	refreshInterval time.Duration
-	queue           chan collector.SystemInfo
-	done            chan bool
-	batchSize       int64
-	canceled        bool
+	reporter       reporter.Writer
+	collector      collector.Reader
+	reportInterval time.Duration
+	pollInterval   time.Duration
+	queue          chan collector.SystemInfo
+	done           chan bool
+	batchSize      int64
+	canceled       bool
 }
 
 func NewMetricsAgent(
-	reportInterval time.Duration,
-	pollInterval time.Duration,
-	endpoint string,
+	cfg *config.Config,
 ) Agent {
-	colector := collector.NewRuntimeReader(pollInterval)
+	colector := collector.NewRuntimeReader(*cfg.PollInterval)
 	client := resty.New()
-	reporter := reporter.NewAgentReporter(reportInterval, client, endpoint)
+	reporter := reporter.NewAgentReporter(*cfg.ReportInterval, client, cfg.Address.ToString())
 	return &MetricsAgent{
-		reporter:        reporter,
-		collector:       colector,
-		sendInterval:    reportInterval,
-		refreshInterval: pollInterval,
-		queue:           make(chan collector.SystemInfo, 100),
-		batchSize:       int64(math.Ceil(float64(reportInterval) / float64(pollInterval))),
+		reporter:       reporter,
+		collector:      colector,
+		reportInterval: *cfg.ReportInterval,
+		pollInterval:   *cfg.PollInterval,
+		queue:          make(chan collector.SystemInfo, 100),
+		batchSize:      int64(math.Ceil(float64(*cfg.ReportInterval) / float64(*cfg.PollInterval))),
 	}
 }
 
@@ -66,7 +65,7 @@ func (a *MetricsAgent) collect() {
 
 func (a *MetricsAgent) report() {
 	count := 0
-	time.Sleep(a.sendInterval)
+	time.Sleep(a.reportInterval)
 	for {
 		select {
 		case <-a.done:
@@ -78,7 +77,7 @@ func (a *MetricsAgent) report() {
 				a.reporter.WriteBatch(convertSystemInfoToReport(st))
 			} else {
 				count = 0
-				time.Sleep(a.sendInterval)
+				time.Sleep(a.reportInterval)
 			}
 		}
 	}
