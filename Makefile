@@ -27,9 +27,5 @@ lint: $(GOLANGCI_BIN) ## go lint
 	$(GOLANGCI_BIN) run --fix ./...
 
 .PHONE: ytest
-ytest: $(METRICSTEST)
-	$(METRICSTEST) '-test.v' '-test.run=^TestIteration5$\' '-source-path=.' '-agent-binary-path=cmd/agent/agent' '-binary-path=cmd/server/server' '-server-port=8080'
-
-.PHONE: ytest-all
 ytest-all: $(METRICSTEST)
 	$(METRICSTEST) '-test.v' '-source-path=.' '-agent-binary-path=cmd/agent/agent' '-binary-path=cmd/server/server' '-server-port=8080'

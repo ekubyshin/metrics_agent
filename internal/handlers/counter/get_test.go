@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/ekubyshin/metrics_agent/internal/handlers"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
 	"github.com/ekubyshin/metrics_agent/internal/types"
 	"github.com/go-chi/chi/v5"
@@ -115,7 +114,7 @@ func TestCounterGetHandler_ServeHTTP(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			request := httptest.NewRequest(tt.fields.method, tt.fields.route, nil)
 			router := chi.NewMux()
-			st := storage.NewMemoryStorage[handlers.Key, any]()
+			st := storage.NewMemoryStorage[string, types.Counter]()
 			mr := NewCounterGetHandler(st)
 			mw := NewCounterPostHandler(st)
 			w := httptest.NewRecorder()

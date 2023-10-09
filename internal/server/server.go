@@ -8,6 +8,7 @@ import (
 	"github.com/ekubyshin/metrics_agent/internal/handlers/explorer"
 	"github.com/ekubyshin/metrics_agent/internal/handlers/gauge"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
+	"github.com/ekubyshin/metrics_agent/internal/types"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -21,13 +22,14 @@ type ChiServer struct {
 }
 
 func NewServer(endpoint string) Server {
-	db := storage.NewMemoryStorage[handlers.Key, any]()
+	dbCounter := storage.NewMemoryStorage[string, types.Counter]()
+	dbGauge := storage.NewMemoryStorage[string, types.Gauge]()
 	router := chi.NewRouter()
-	gaugePostHandler := gauge.NewGaugePostHandler(db)
-	counterPostHandler := counter.NewCounterPostHandler(db)
-	gaugeGetHandler := gauge.NewGaugeGetHandler(db)
-	counterGetHanlder := counter.NewCounterGetHandler(db)
-	listHanlder := explorer.NewExplorerHandler(db)
+	gaugePostHandler := gauge.NewGaugePostHandler(dbGauge)
+	counterPostHandler := counter.NewCounterPostHandler(dbCounter)
+	gaugeGetHandler := gauge.NewGaugeGetHandler(dbGauge)
+	counterGetHanlder := counter.NewCounterGetHandler(dbCounter)
+	listHanlder := explorer.NewExplorerHandler(dbCounter, dbGauge)
 	router.Get(listHanlder.BaseURL(), listHanlder.ServeHTTP)
 	router.Post("/update/{type}/{name}/{value}", func(w http.ResponseWriter, r *http.Request) {
 		t := chi.URLParam(r, handlers.ParamTypeKey)
@@ -41,15 +43,7 @@ func NewServer(endpoint string) Server {
 		}
 	})
 	router.Post("/update/{type}/", func(w http.ResponseWriter, r *http.Request) {
-		t := chi.URLParam(r, handlers.ParamTypeKey)
-		switch t {
-		case handlers.GaugeActionKey:
-			w.WriteHeader(http.StatusNotFound)
-		case handlers.CounterActionKey:
-			w.WriteHeader(http.StatusNotFound)
-		default:
-			w.WriteHeader(http.StatusNotImplemented)
-		}
+		w.WriteHeader(GetErrorStatusCode(r))
 	})
 	router.Route("/value", func(r chi.Router) {
 		r.Get(gaugeGetHandler.BaseURL(), gaugeGetHandler.ServeHTTP)
@@ -63,4 +57,16 @@ func NewServer(endpoint string) Server {
 
 func (s *ChiServer) Run() error {
 	return http.ListenAndServe(s.endpoint, s.router)
+}
+
+func GetErrorStatusCode(r *http.Request) int {
+	t := chi.URLParam(r, handlers.ParamTypeKey)
+	switch t {
+	case handlers.GaugeActionKey:
+		return http.StatusNotFound
+	case handlers.CounterActionKey:
+		return http.StatusNotFound
+	default:
+		return http.StatusNotImplemented
+	}
 }

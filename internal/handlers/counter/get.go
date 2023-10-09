@@ -12,10 +12,10 @@ import (
 
 type CounterGetHandler struct {
 	route string
-	db    storage.Storage[handlers.Key, any]
+	db    storage.Storage[string, types.Counter]
 }
 
-func NewCounterGetHandler(db storage.Storage[handlers.Key, any]) handlers.Handler {
+func NewCounterGetHandler(db storage.Storage[string, types.Counter]) handlers.Handler {
 	return &CounterGetHandler{
 		route: "/counter/{name}",
 		db:    db,
@@ -28,13 +28,11 @@ func (m *CounterGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	if rv, ok := m.db.Get(handlers.Key{Type: handlers.CounterActionKey, Name: paramName}); ok {
-		if v, ok2 := rv.(types.Counter); ok2 {
-			c := int64(v)
-			_, err := w.Write([]byte(strconv.FormatInt(c, 10)))
-			if err == nil {
-				return
-			}
+	if v, ok := m.db.Get(paramName); ok {
+		c := int64(v)
+		_, err := w.Write([]byte(strconv.FormatInt(c, 10)))
+		if err == nil {
+			return
 		}
 	}
 	w.WriteHeader(http.StatusNotFound)

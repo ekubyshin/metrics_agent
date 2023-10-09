@@ -6,27 +6,32 @@ import (
 
 	"github.com/ekubyshin/metrics_agent/internal/handlers"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
+	"github.com/ekubyshin/metrics_agent/internal/types"
 )
 
 type ExplorerHandler struct {
-	route string
-	db    storage.Storage[handlers.Key, any]
+	route     string
+	dbCounter storage.Storage[string, types.Counter]
+	dbGauge   storage.Storage[string, types.Gauge]
 }
 
-func NewExplorerHandler(db storage.Storage[handlers.Key, any]) handlers.Handler {
+func NewExplorerHandler(dbCounter storage.Storage[string, types.Counter], dbGauge storage.Storage[string, types.Gauge]) handlers.Handler {
 	return &ExplorerHandler{
-		route: "/",
-		db:    db,
+		route:     "/",
+		dbCounter: dbCounter,
+		dbGauge:   dbGauge,
 	}
 }
 
 func (e *ExplorerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	elems := e.db.List()
+	elemsGauge := e.dbGauge.List()
+	elemsCounter := e.dbCounter.List()
 	out := make(map[string]any)
-	if len(elems) > 0 {
-		for _, v := range elems {
-			out[v.Key.Name] = v.Value
-		}
+	for _, v := range elemsGauge {
+		out[handlers.GaugeActionKey+"_"+v.Key] = v.Value
+	}
+	for _, v := range elemsCounter {
+		out[handlers.CounterActionKey+"_"+v.Key] = v.Value
 	}
 	res, err := json.Marshal(out)
 	w.Header().Add("Content-type", "application/json")

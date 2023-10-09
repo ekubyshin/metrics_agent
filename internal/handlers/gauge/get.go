@@ -12,10 +12,10 @@ import (
 
 type GaugeGetHandler struct {
 	route string
-	db    storage.Storage[handlers.Key, any]
+	db    storage.Storage[string, types.Gauge]
 }
 
-func NewGaugeGetHandler(db storage.Storage[handlers.Key, any]) handlers.Handler {
+func NewGaugeGetHandler(db storage.Storage[string, types.Gauge]) handlers.Handler {
 	return &GaugeGetHandler{
 		route: "/gauge/{name}",
 		db:    db,
@@ -28,12 +28,10 @@ func (m *GaugeGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	if rv, ok := m.db.Get(handlers.Key{Type: handlers.GaugeActionKey, Name: paramName}); ok {
-		if v, ok2 := rv.(types.Gauge); ok2 {
-			_, err := w.Write([]byte(strconv.FormatFloat(float64(v), 'f', -1, 64)))
-			if err == nil {
-				return
-			}
+	if v, ok := m.db.Get(paramName); ok {
+		_, err := w.Write([]byte(strconv.FormatFloat(float64(v), 'f', -1, 64)))
+		if err == nil {
+			return
 		}
 	}
 	w.WriteHeader(http.StatusNotFound)

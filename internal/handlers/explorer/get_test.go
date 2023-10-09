@@ -51,7 +51,7 @@ func TestExplorerHandler_ServeHTTP(t *testing.T) {
 			want{
 				contentType: "application/json",
 				code:        http.StatusOK,
-				response:    `{"someMetric":1.0}`,
+				response:    `{"gauge_someMetric":1.0}`,
 			},
 		},
 		{
@@ -77,9 +77,9 @@ func TestExplorerHandler_ServeHTTP(t *testing.T) {
 				contentType: "application/json",
 				code:        http.StatusOK,
 				response: `{
-					"someMetric":1.0,
-					"someMetric2":123.0,
-					"someMetric3":1
+					"gauge_someMetric":1.0,
+					"gauge_someMetric2":123.0,
+					"counter_someMetric3":1
 				}`,
 			},
 		},
@@ -88,11 +88,20 @@ func TestExplorerHandler_ServeHTTP(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			request := httptest.NewRequest("GET", "/", nil)
 			router := chi.NewMux()
-			st := storage.NewMemoryStorage[handlers.Key, any]()
-			mr := NewExplorerHandler(st)
+			stC := storage.NewMemoryStorage[string, types.Counter]()
+			stG := storage.NewMemoryStorage[string, types.Gauge]()
+			mr := NewExplorerHandler(stC, stG)
 			w := httptest.NewRecorder()
 			for _, v := range tt.args {
-				st.Put(handlers.Key{Type: v.Type, Name: v.Name}, v.Value)
+				if v.Type == handlers.GaugeActionKey {
+					if val, ok := v.Value.(types.Gauge); ok {
+						stG.Put(v.Name, val)
+					}
+				} else {
+					if val, ok := v.Value.(types.Counter); ok {
+						stC.Put(v.Name, val)
+					}
+				}
 			}
 			router.Get("/", mr.ServeHTTP)
 			router.ServeHTTP(w, request)

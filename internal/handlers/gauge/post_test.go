@@ -5,7 +5,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/ekubyshin/metrics_agent/internal/handlers"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
 	"github.com/ekubyshin/metrics_agent/internal/types"
 	"github.com/go-chi/chi/v5"
@@ -61,7 +60,7 @@ func TestGaugeHandler_ServeHTTP(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			request := httptest.NewRequest(tt.fields.method, tt.fields.route, nil)
 			router := chi.NewMux()
-			st := storage.NewMemoryStorage[handlers.Key, any]()
+			st := storage.NewMemoryStorage[string, types.Gauge]()
 			m := NewGaugePostHandler(st)
 			w := httptest.NewRecorder()
 			router.Post(m.BaseURL(), m.ServeHTTP)

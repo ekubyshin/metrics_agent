@@ -5,7 +5,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/ekubyshin/metrics_agent/internal/handlers"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
 	"github.com/ekubyshin/metrics_agent/internal/types"
 	"github.com/go-chi/chi/v5"
@@ -86,7 +85,7 @@ func TestCounterHandler_ServeHTTP(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			request := httptest.NewRequest(tt.fields.method, tt.fields.route, nil)
 			router := chi.NewMux()
-			st := storage.NewMemoryStorage[handlers.Key, any]()
+			st := storage.NewMemoryStorage[string, types.Counter]()
 			m := NewCounterPostHandler(st)
 			w := httptest.NewRecorder()
 			router.Post(m.BaseURL(), m.ServeHTTP)
@@ -95,7 +94,7 @@ func TestCounterHandler_ServeHTTP(t *testing.T) {
 			assert.Equal(t, tt.want.code, res.StatusCode)
 			defer res.Body.Close()
 			if res.StatusCode == http.StatusOK {
-				v, err := st.Get(handlers.Key{Type: handlers.CounterActionKey, Name: tt.fields.key})
+				v, err := st.Get(tt.fields.key)
 				assert.True(t, err)
 				assert.Equal(t, tt.fields.value, v)
 				assert.Equal(t, tt.want.contentType, res.Header.Get("Content-Type"))
