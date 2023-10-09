@@ -30,6 +30,17 @@ func TestGaugeGetHandler_ServeHTTP(t *testing.T) {
 		want   want
 	}{
 		{
+			"404",
+			fields{
+				route: "/gauge/testSetGet111",
+			},
+			want{
+				code:        http.StatusNotFound,
+				contentType: "text/plain; charset=utf-8",
+				response:    ``,
+			},
+		},
+		{
 			"test 200",
 			fields{
 				route:   "/gauge/testSetGet111",

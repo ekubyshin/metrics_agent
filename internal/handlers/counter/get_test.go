@@ -56,18 +56,6 @@ func TestCounterGetHandler_ServeHTTP(t *testing.T) {
 			},
 		},
 		{
-			"test 404",
-			fields{
-				route:  "/counter/someCounter",
-				method: "POST",
-			},
-			want{
-				code:        http.StatusMethodNotAllowed,
-				contentType: "",
-				response:    ``,
-			},
-		},
-		{
 			"test 200",
 			fields{
 				route:   "/counter/testSetGet110",

@@ -29,7 +29,7 @@ func TestCounterHandler_ServeHTTP(t *testing.T) {
 		want   want
 	}{
 		{
-			"test 400",
+			"string instead of number",
 			fields{
 				route:  "/counter/someCounter/a",
 				method: "POST",
@@ -41,7 +41,7 @@ func TestCounterHandler_ServeHTTP(t *testing.T) {
 			},
 		},
 		{
-			"test 404",
+			"float instead of int",
 			fields{
 				route:  "/counter/someCounter/1.0",
 				method: "POST",
