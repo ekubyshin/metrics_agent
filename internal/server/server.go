@@ -3,6 +3,7 @@ package server
 import (
 	"net/http"
 
+	"github.com/ekubyshin/metrics_agent/internal/config"
 	"github.com/ekubyshin/metrics_agent/internal/handlers"
 	"github.com/ekubyshin/metrics_agent/internal/handlers/counter"
 	"github.com/ekubyshin/metrics_agent/internal/handlers/explorer"
@@ -18,10 +19,10 @@ type Server interface {
 
 type ChiServer struct {
 	router   *chi.Mux
-	endpoint string
+	endpoint config.Address
 }
 
-func NewServer(endpoint string) Server {
+func NewServer(endpoint config.Address) Server {
 	dbCounter := storage.NewMemoryStorage[string, types.Counter]()
 	dbGauge := storage.NewMemoryStorage[string, types.Gauge]()
 	router := chi.NewRouter()
@@ -56,7 +57,7 @@ func NewServer(endpoint string) Server {
 }
 
 func (s *ChiServer) Run() error {
-	return http.ListenAndServe(s.endpoint, s.router)
+	return http.ListenAndServe(s.endpoint.ToString(), s.router)
 }
 
 func GetErrorStatusCode(r *http.Request) int {

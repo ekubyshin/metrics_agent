@@ -7,7 +7,7 @@ import (
 
 func main() {
 	cfg := config.AutoLoad()
-	srv := server.NewServer(cfg.Address.ToString())
+	srv := server.NewServer(cfg.Address)
 	err := srv.Run()
 	if err != nil {
 		panic(err)
