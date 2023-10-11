@@ -15,7 +15,7 @@ type GaugeGetHandler struct {
 	db    storage.Storage[string, types.Gauge]
 }
 
-func NewGaugeGetHandler(db storage.Storage[string, types.Gauge]) handlers.Handler {
+func NewGaugeGetHandler(db storage.Storage[string, types.Gauge]) *GaugeGetHandler {
 	return &GaugeGetHandler{
 		route: "/gauge/{name}",
 		db:    db,

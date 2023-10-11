@@ -22,7 +22,7 @@ type ChiServer struct {
 	endpoint config.Address
 }
 
-func NewServer(endpoint config.Address) Server {
+func NewServer(endpoint config.Address) *ChiServer {
 	dbCounter := storage.NewMemoryStorage[string, types.Counter]()
 	dbGauge := storage.NewMemoryStorage[string, types.Gauge]()
 	router := chi.NewRouter()

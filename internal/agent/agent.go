@@ -30,7 +30,7 @@ type MetricsAgent struct {
 
 func NewMetricsAgent(
 	cfg config.Config,
-) Agent {
+) *MetricsAgent {
 	colector := collector.NewRuntimeReader(cfg.PollInterval)
 	client := resty.New()
 	reporter := reporter.NewAgentReporter(client, cfg.Address.ToString())
@@ -59,7 +59,10 @@ func (a *MetricsAgent) collect() {
 			a.collector.Stop()
 			return
 		}
-		a.queue <- st
+		if st == nil {
+			return
+		}
+		a.queue <- *st
 	}
 }
 

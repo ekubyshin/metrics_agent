@@ -15,7 +15,7 @@ type GaugePostHandler struct {
 	db    storage.Storage[string, types.Gauge]
 }
 
-func NewGaugePostHandler(db storage.Storage[string, types.Gauge]) handlers.Handler {
+func NewGaugePostHandler(db storage.Storage[string, types.Gauge]) *GaugePostHandler {
 	return &GaugePostHandler{
 		route: "/gauge/{name}/{value}",
 		db:    db,

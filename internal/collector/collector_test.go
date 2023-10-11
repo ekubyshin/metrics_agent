@@ -16,7 +16,7 @@ func TestRuntimeReader_convertToStat(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want SystemInfo
+		want *SystemInfo
 	}{
 		{
 			"test",
@@ -25,7 +25,7 @@ func TestRuntimeReader_convertToStat(t *testing.T) {
 					Alloc: 1.0,
 				},
 			},
-			SystemInfo{Alloc: 1.0},
+			&SystemInfo{Alloc: 1.0},
 		},
 	}
 	for _, tt := range tests {
@@ -37,6 +37,7 @@ func TestRuntimeReader_convertToStat(t *testing.T) {
 			}
 			got := r.convertToStat(tt.args.st)
 			got.RandomValue = 0
+			assert.NotNil(t, got)
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("RuntimeReader.convertToStat() = %v, want %v", got, tt.want)
 			}

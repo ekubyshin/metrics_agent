@@ -12,7 +12,7 @@ import (
 type Reader interface {
 	Run()
 	Stop()
-	Read() (SystemInfo, error)
+	Read() (*SystemInfo, error)
 }
 
 type RuntimeReader struct {
@@ -23,7 +23,7 @@ type RuntimeReader struct {
 	pollCounter  types.Counter
 }
 
-func NewRuntimeReader(pollInterval time.Duration) Reader {
+func NewRuntimeReader(pollInterval time.Duration) *RuntimeReader {
 	return &RuntimeReader{
 		stats:        make(chan runtime.MemStats, 100),
 		done:         make(chan bool),
@@ -56,9 +56,9 @@ func generateRandom() float64 {
 	return rand.Float64()
 }
 
-func (r *RuntimeReader) Read() (SystemInfo, error) {
+func (r *RuntimeReader) Read() (*SystemInfo, error) {
 	if r.closed {
-		return SystemInfo{}, errors.New("monitor stopped")
+		return nil, errors.New("monitor stopped")
 	}
 	return r.convertToStat(<-r.stats), nil
 }
@@ -67,8 +67,8 @@ func (r *RuntimeReader) Stop() {
 	r.done <- true
 }
 
-func (r *RuntimeReader) convertToStat(st runtime.MemStats) SystemInfo {
-	return SystemInfo{
+func (r *RuntimeReader) convertToStat(st runtime.MemStats) *SystemInfo {
+	return &SystemInfo{
 		Alloc:         types.Gauge(st.Alloc),
 		BuckHashSys:   types.Gauge(st.BuckHashSys),
 		Frees:         types.Gauge(st.Frees),

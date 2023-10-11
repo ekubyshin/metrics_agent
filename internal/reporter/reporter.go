@@ -27,7 +27,7 @@ type AgentWriter struct {
 	endpoint string
 }
 
-func NewAgentReporter(client *resty.Client, endpoint string) Writer {
+func NewAgentReporter(client *resty.Client, endpoint string) *AgentWriter {
 	return &AgentWriter{
 		client:   client,
 		endpoint: endpoint,
