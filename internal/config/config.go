@@ -16,6 +16,10 @@ import (
 
 var regExp = regexp.MustCompile(`^\w+:[0-9]{2,5}$`)
 
+// Это промежуточная структура, которая принимает int
+// тк в тестах интервалы передаются в int, а не в duration
+// А мне хочется хранить в конфиге именно duration
+// поэтому я читаю int, а потом возвращаю уже нужную конфигу с duration
 type config struct {
 	Address        *Address `env:"ADDRESS"`
 	ReportInterval *int     `env:"REPORT_INTERVAL"`
