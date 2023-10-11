@@ -36,15 +36,15 @@ func (m *MemStorage[K, V]) Delete(key K) {
 func (m *MemStorage[K, V]) List() []KeyValuer[K, V] {
 	arr := make([]KeyValuer[K, V], 0, 100)
 	m.data.Range(func(key, value any) bool {
-		if key != nil && key != "" && value != nil {
-			if catKey, ok := key.(K); ok {
-				if castVal, ok := value.(V); ok {
-					arr = append(arr, KeyValuer[K, V]{Key: catKey, Value: castVal})
-				}
-			}
+		if key == nil || key == "" || value == nil {
 			return true
 		}
-		return false
+		if catKey, ok := key.(K); ok {
+			if castVal, ok := value.(V); ok {
+				arr = append(arr, KeyValuer[K, V]{Key: catKey, Value: castVal})
+			}
+		}
+		return true
 	})
 	return arr
 }
