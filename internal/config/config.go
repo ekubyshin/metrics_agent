@@ -24,12 +24,14 @@ type config struct {
 	Address        *Address `env:"ADDRESS"`
 	ReportInterval *int     `env:"REPORT_INTERVAL"`
 	PollInterval   *int     `env:"POLL_INTERVAL"`
+	Env            *string  `env:"ENV"`
 }
 
 type Config struct {
 	Address        Address       `env:"ADDRESS"`
 	ReportInterval time.Duration `env:"REPORT_INTERVAL"`
 	PollInterval   time.Duration `env:"POLL_INTERVAL"`
+	Env            string        `env:"ENV"`
 }
 
 type Address struct {

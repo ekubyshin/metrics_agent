@@ -8,6 +8,7 @@ import (
 	"github.com/ekubyshin/metrics_agent/internal/handlers/counter"
 	"github.com/ekubyshin/metrics_agent/internal/handlers/explorer"
 	"github.com/ekubyshin/metrics_agent/internal/handlers/gauge"
+	l "github.com/ekubyshin/metrics_agent/internal/logger"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
 	"github.com/ekubyshin/metrics_agent/internal/types"
 	"github.com/go-chi/chi/v5"
@@ -22,10 +23,12 @@ type ChiServer struct {
 	endpoint config.Address
 }
 
-func NewServer(endpoint config.Address) *ChiServer {
+func NewServer(endpoint config.Address, logger l.Logger) *ChiServer {
 	dbCounter := storage.NewMemoryStorage[string, types.Counter]()
 	dbGauge := storage.NewMemoryStorage[string, types.Gauge]()
 	router := chi.NewRouter()
+	router.Use(l.NewRequestLogger(logger))
+	router.Use(l.NewResponseLogger(logger))
 	gaugePostHandler := gauge.NewGaugePostHandler(dbGauge)
 	counterPostHandler := counter.NewCounterPostHandler(dbCounter)
 	gaugeGetHandler := gauge.NewGaugeGetHandler(dbGauge)
