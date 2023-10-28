@@ -8,6 +8,7 @@ import (
 	"github.com/ekubyshin/metrics_agent/internal/handlers/counter"
 	"github.com/ekubyshin/metrics_agent/internal/handlers/explorer"
 	"github.com/ekubyshin/metrics_agent/internal/handlers/gauge"
+	"github.com/ekubyshin/metrics_agent/internal/handlers/rest"
 	l "github.com/ekubyshin/metrics_agent/internal/logger"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
 	"github.com/ekubyshin/metrics_agent/internal/types"
@@ -29,11 +30,23 @@ func NewServer(endpoint config.Address, logger l.Logger) *ChiServer {
 	router := chi.NewRouter()
 	router.Use(l.NewRequestLogger(logger))
 	router.Use(l.NewResponseLogger(logger))
+	registerRoutes(router, dbCounter, dbGauge)
+	return &ChiServer{
+		router:   router,
+		endpoint: endpoint,
+	}
+}
+
+func registerRoutes(
+	router *chi.Mux,
+	dbCounter storage.Storage[string, types.Counter],
+	dbGauge storage.Storage[string, types.Gauge]) {
 	gaugePostHandler := gauge.NewGaugePostHandler(dbGauge)
 	counterPostHandler := counter.NewCounterPostHandler(dbCounter)
 	gaugeGetHandler := gauge.NewGaugeGetHandler(dbGauge)
 	counterGetHanlder := counter.NewCounterGetHandler(dbCounter)
 	listHanlder := explorer.NewExplorerHandler(dbCounter, dbGauge)
+	restHandler := rest.NewRestHandler(dbCounter, dbGauge)
 	router.Get(listHanlder.BaseURL(), listHanlder.ServeHTTP)
 	router.Post("/update/{type}/{name}/{value}", func(w http.ResponseWriter, r *http.Request) {
 		t := chi.URLParam(r, handlers.ParamTypeKey)
@@ -53,10 +66,8 @@ func NewServer(endpoint config.Address, logger l.Logger) *ChiServer {
 		r.Get(gaugeGetHandler.BaseURL(), gaugeGetHandler.ServeHTTP)
 		r.Get(counterGetHanlder.BaseURL(), counterGetHanlder.ServeHTTP)
 	})
-	return &ChiServer{
-		router:   router,
-		endpoint: endpoint,
-	}
+	router.Post("/update/", restHandler.Update)
+	router.Post("/value/", restHandler.Value)
 }
 
 func (s *ChiServer) Run() error {
