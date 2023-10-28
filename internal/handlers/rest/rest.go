@@ -13,7 +13,7 @@ import (
 
 const (
 	contentTypeHeader = "Content-Type"
-	applicationJson   = "application-json"
+	applicationJSON   = "application-json"
 )
 
 type RestHandler struct {
@@ -40,7 +40,7 @@ func NewRestHandler(
 }
 
 func (h *RestHandler) Update(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add(contentTypeHeader, applicationJson)
+	w.Header().Add(contentTypeHeader, applicationJSON)
 	if !checkContentType(r) {
 		w.WriteHeader(http.StatusBadRequest)
 	}
@@ -69,11 +69,11 @@ func (h *RestHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Write(res)
+	_, _ = w.Write(res)
 }
 
 func (h *RestHandler) Value(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add(contentTypeHeader, applicationJson)
+	w.Header().Add(contentTypeHeader, applicationJSON)
 	if !checkContentType(r) {
 		w.WriteHeader(http.StatusBadRequest)
 	}
@@ -103,7 +103,7 @@ func (h *RestHandler) Value(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Write(res)
+	_, _ = w.Write(res)
 }
 
 func (h *RestHandler) putGauge(m *Metrics) bool {

@@ -18,7 +18,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer l.Sync()
+	defer l.Sync() //nolint
 	srv := server.NewServer(cfg.Address, l)
 	err = srv.Run()
 	if err != nil {
