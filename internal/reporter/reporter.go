@@ -1,18 +1,17 @@
 package reporter
 
 import (
-	"reflect"
-	"strings"
 	"sync"
 
+	"github.com/ekubyshin/metrics_agent/internal/types"
 	"github.com/go-resty/resty/v2"
 )
 
-const path = "/update/{type}/{name}/{value}"
+const path = "/update/"
 
 type Writer interface {
-	Write(data Report) error
-	WriteBatch(data []Report) []error
+	Write(data types.Metrics) error
+	WriteBatch(data []types.Metrics) []error
 }
 
 type Report struct {
@@ -35,9 +34,9 @@ func NewAgentReporter(client *resty.Client, endpoint string) *AgentWriter {
 	}
 }
 
-func (r *AgentWriter) send(data Report) error {
+func (r *AgentWriter) send(data types.Metrics) error {
 
-	_, err := r.client.R().SetPathParams(reportToMap(data)).Post("http://" + r.endpoint + path)
+	_, err := r.client.R().SetBody(data).Post("http://" + r.endpoint + path)
 
 	if err != nil {
 		return err
@@ -46,27 +45,16 @@ func (r *AgentWriter) send(data Report) error {
 	return err
 }
 
-func (r *AgentWriter) Write(data Report) error {
+func (r *AgentWriter) Write(data types.Metrics) error {
 	return r.send(data)
 }
 
-func reportToMap(data Report) map[string]string {
-	res := make(map[string]string)
-	v := reflect.ValueOf(data)
-	for f := 0; f < v.NumField(); f++ {
-		field := v.Field(f)
-		fieldName := strings.ToLower(v.Type().Field(f).Name)
-		res[fieldName] = strings.ToLower(field.String())
-	}
-	return res
-}
-
-func (r *AgentWriter) WriteBatch(data []Report) []error {
+func (r *AgentWriter) WriteBatch(data []types.Metrics) []error {
 	var wg sync.WaitGroup
 	resp := make([]error, 0, len(data))
 	for _, v := range data {
 		wg.Add(1)
-		go func(v Report) {
+		go func(v types.Metrics) {
 			defer wg.Done()
 			err := r.Write(v)
 			if err != nil {

@@ -2,52 +2,18 @@ package reporter
 
 import (
 	"fmt"
-	"reflect"
-	"strings"
 	"testing"
 
+	"github.com/ekubyshin/metrics_agent/internal/types"
+	"github.com/ekubyshin/metrics_agent/internal/utils"
 	"github.com/go-resty/resty/v2"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_reportToMap(t *testing.T) {
-	type args struct {
-		data Report
-	}
-	tests := []struct {
-		name string
-		args args
-		want map[string]string
-	}{
-		{
-			"check full",
-			args{
-				Report{
-					Type:  "gauge",
-					Name:  "some",
-					Value: "1.0",
-				},
-			},
-			map[string]string{
-				"type":  "gauge",
-				"name":  "some",
-				"value": "1.0",
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := reportToMap(tt.args.data); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("reportToMap() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestAgentWriter_WriteBatch(t *testing.T) {
 	type args struct {
-		data []Report
+		data []types.Metrics
 	}
 	const endPoint = "localhost:8080"
 	tests := []struct {
@@ -58,11 +24,11 @@ func TestAgentWriter_WriteBatch(t *testing.T) {
 		{
 			"check ok",
 			args{
-				[]Report{
+				[]types.Metrics{
 					{
-						Type:  "gauge",
-						Name:  "someCounter",
-						Value: "1.0",
+						MType: "gauge",
+						ID:    "someCounter",
+						Value: utils.ToPointer[float64](1.0),
 					},
 				},
 			},
@@ -71,21 +37,16 @@ func TestAgentWriter_WriteBatch(t *testing.T) {
 		{
 			"check several",
 			args{
-				[]Report{
+				[]types.Metrics{
 					{
-						Type:  "gauge",
-						Name:  "someCounter",
-						Value: "1.0",
+						MType: "gauge",
+						ID:    "someCounter",
+						Value: utils.ToPointer[float64](1.0),
 					},
 					{
-						Type:  "counter",
-						Name:  "someCounter",
-						Value: "1",
-					},
-					{
-						Type:  "gauge",
-						Name:  "someCounter2",
-						Value: "2.0",
+						MType: "counter",
+						ID:    "someCounter",
+						Delta: utils.ToPointer[int64](1),
 					},
 				},
 			},
@@ -97,13 +58,12 @@ func TestAgentWriter_WriteBatch(t *testing.T) {
 			client := resty.New()
 			httpmock.ActivateNonDefault(client.GetClient())
 			defer httpmock.DeactivateAndReset()
-			for _, r := range tt.args.data {
-				httpmock.RegisterResponder(
-					"POST",
-					fmt.Sprintf("http://%v/update/%v/%v/%v", endPoint, strings.ToLower(r.Type), strings.ToLower(r.Name), r.Value),
-					httpmock.NewStringResponder(200, ``),
-				)
-			}
+			resp, _ := httpmock.NewJsonResponder(200, types.Metrics{})
+			httpmock.RegisterResponder(
+				"POST",
+				fmt.Sprintf("http://%v/update/", endPoint),
+				resp,
+			)
 			r := NewAgentReporter(client, endPoint)
 			errs := r.WriteBatch(tt.args.data)
 			assert.Len(t, errs, 0)
