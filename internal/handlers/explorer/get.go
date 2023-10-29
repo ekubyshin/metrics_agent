@@ -34,7 +34,7 @@ func (e *ExplorerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		out[handlers.CounterActionKey+"_"+v.Key] = v.Value
 	}
 	res, err := json.Marshal(out)
-	w.Header().Add("Content-type", "application/json")
+	w.Header().Add("Content-type", "text/html")
 	if err == nil {
 		_, err = w.Write(res)
 		if err == nil {

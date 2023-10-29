@@ -108,9 +108,13 @@ func NewConfigFromENV() Config {
 	}
 	if tcfg.PollInterval != nil && *tcfg.PollInterval > 0 {
 		builder = builder.WithPollInterval(*tcfg.PollInterval)
+	} else {
+		builder = builder.WithPollInterval(2)
 	}
 	if tcfg.ReportInterval != nil && *tcfg.ReportInterval > 0 {
 		builder = builder.WithReportInterval(*tcfg.ReportInterval)
+	} else {
+		builder = builder.WithReportInterval(10)
 	}
 	return builder.Build()
 }
