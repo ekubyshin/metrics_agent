@@ -27,6 +27,7 @@ type AgentWriter struct {
 }
 
 func NewAgentReporter(client *resty.Client, endpoint string) *AgentWriter {
+	client.Header.Add("Content-Type", "application/json")
 	return &AgentWriter{
 		client:   client,
 		endpoint: endpoint,

@@ -13,7 +13,7 @@ import (
 
 const (
 	contentTypeHeader = "Content-Type"
-	applicationJSON   = "application-json"
+	applicationJSON   = "application/json"
 )
 
 type RestHandler struct {
@@ -127,7 +127,7 @@ func (h *RestHandler) putCounter(m *Metrics) (types.Counter, bool) {
 }
 
 func checkContentType(r *http.Request) bool {
-	return r.Header.Get(contentTypeHeader) == "application/json"
+	return r.Header.Get(contentTypeHeader) == applicationJSON
 }
 
 func parseMetircs(r *http.Request) (*Metrics, bool) {
