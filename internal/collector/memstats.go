@@ -31,5 +31,6 @@ type SystemInfo struct {
 	Sys           types.Gauge   `json:"sys"`
 	TotalAlloc    types.Gauge   `json:"total_alloc"`
 	RandomValue   types.Gauge   `json:"random_value"`
+	MCacheSys     types.Gauge   `json:"mcache_sys"`
 	PollCount     types.Counter `json:"poll_counter"`
 }
