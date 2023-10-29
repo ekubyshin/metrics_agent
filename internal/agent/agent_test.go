@@ -49,6 +49,7 @@ func Test_convertSystemInfoToReport(t *testing.T) {
 					TotalAlloc:    1.0,
 					RandomValue:   1.0,
 					MCacheSys:     1.0,
+					MSpanSys:      1.0,
 					PollCount:     1,
 				},
 			},
@@ -186,6 +187,11 @@ func Test_convertSystemInfoToReport(t *testing.T) {
 				{
 					MType: "gauge",
 					ID:    "MCacheSys",
+					Value: utils.ToPointer[float64](1.0),
+				},
+				{
+					MType: "gauge",
+					ID:    "MSpanSys",
 					Value: utils.ToPointer[float64](1.0),
 				},
 				{
