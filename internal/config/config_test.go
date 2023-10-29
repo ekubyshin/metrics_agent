@@ -82,22 +82,29 @@ func TestAddress_Config(t *testing.T) {
 			false,
 		},
 		{
-			"should parse correct",
+			"should parse correct 2",
 			map[string]string{
-				"ADDRESS": "localhost:8080",
+				"ADDRESS":         "localhost:8080",
+				"POLL_INTERVAL":   "2",
+				"REPORT_INTERVAL": "10",
 			},
 			Config{
 				Address: Address{
 					Host: host,
 					Port: port,
 				},
+				PollInterval:   poll,
+				ReportInterval: report,
 			},
 			false,
 		},
 		{
 			"should return empty",
 			map[string]string{},
-			Config{},
+			Config{
+				PollInterval:   poll,
+				ReportInterval: report,
+			},
 			false,
 		},
 	}

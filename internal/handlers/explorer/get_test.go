@@ -34,7 +34,7 @@ func TestExplorerHandler_ServeHTTP(t *testing.T) {
 			"empty",
 			[]args{},
 			want{
-				contentType: "application/json",
+				contentType: "text/html",
 				code:        http.StatusOK,
 				response:    "{}",
 			},
@@ -49,7 +49,7 @@ func TestExplorerHandler_ServeHTTP(t *testing.T) {
 				},
 			},
 			want{
-				contentType: "application/json",
+				contentType: "text/html",
 				code:        http.StatusOK,
 				response:    `{"gauge_someMetric":1.0}`,
 			},
@@ -74,7 +74,7 @@ func TestExplorerHandler_ServeHTTP(t *testing.T) {
 				},
 			},
 			want{
-				contentType: "application/json",
+				contentType: "text/html",
 				code:        http.StatusOK,
 				response: `{
 					"gauge_someMetric":1.0,
