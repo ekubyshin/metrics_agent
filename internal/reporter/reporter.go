@@ -1,13 +1,19 @@
 package reporter
 
 import (
+	"bytes"
+	"compress/gzip"
+	"encoding/json"
 	"sync"
 
 	"github.com/ekubyshin/metrics_agent/internal/types"
 	"github.com/go-resty/resty/v2"
 )
 
-const path = "/update/"
+const (
+	path            = "/update/"
+	contentEncoding = "Content-Encoding"
+)
 
 type Writer interface {
 	Write(data types.Metrics) error
@@ -36,18 +42,45 @@ func NewAgentReporter(client *resty.Client, endpoint string) *AgentWriter {
 }
 
 func (r *AgentWriter) send(data types.Metrics) error {
-
-	_, err := r.client.R().SetBody(data).Post("http://" + r.endpoint + path)
-
+	bSend, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
-
+	compB, err := Compress(bSend)
+	if err == nil {
+		if h := r.client.Header.Get(contentEncoding); h == "" {
+			r.client.Header.Add(contentEncoding, "gzip")
+		}
+		bSend = compB
+	} else {
+		r.client.Header.Del(contentEncoding)
+	}
+	_, err = r.client.R().SetBody(bSend).Post("http://" + r.endpoint + path)
+	if err != nil {
+		return err
+	}
 	return err
 }
 
 func (r *AgentWriter) Write(data types.Metrics) error {
 	return r.send(data)
+}
+
+func Compress(data []byte) ([]byte, error) {
+	var b bytes.Buffer
+	zw, err := gzip.NewWriterLevel(&b, gzip.BestSpeed)
+	if err != nil {
+		return nil, err
+	}
+	_, err = zw.Write(data)
+	if err != nil {
+		return nil, err
+	}
+	err = zw.Close()
+	if err != nil {
+		return nil, err
+	}
+	return b.Bytes(), nil
 }
 
 func (r *AgentWriter) WriteBatch(data []types.Metrics) []error {

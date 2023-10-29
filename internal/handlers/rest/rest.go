@@ -138,7 +138,7 @@ func parseMetircs(r *http.Request) (*Metrics, bool) {
 	if err != nil {
 		return nil, false
 	}
-	if err = json.Unmarshal(buf.Bytes(), &metrics); err != nil {
+	if err := json.Unmarshal(buf.Bytes(), &metrics); err != nil {
 		return nil, false
 	}
 	if metrics.MType != handlers.CounterActionKey && metrics.MType != handlers.GaugeActionKey {
