@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ekubyshin/metrics_agent/internal/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -56,8 +57,6 @@ func TestAddress_UnmarshalText(t *testing.T) {
 func TestAddress_Config(t *testing.T) {
 	host := "localhost"
 	port := 8080
-	poll := time.Duration(2) * time.Second
-	report := time.Duration(10) * time.Second
 	tests := []struct {
 		name    string
 		env     map[string]string
@@ -76,34 +75,52 @@ func TestAddress_Config(t *testing.T) {
 					Host: host,
 					Port: port,
 				},
-				PollInterval:   poll,
-				ReportInterval: report,
+				PollInterval:    2,
+				ReportInterval:  10,
+				StoreInterval:   0,
+				FileStoragePath: defaultPath,
+				Restore:         utils.ToPointer[bool](true),
 			},
 			false,
 		},
 		{
 			"should parse correct 2",
 			map[string]string{
-				"ADDRESS":         "localhost:8080",
-				"POLL_INTERVAL":   "2",
-				"REPORT_INTERVAL": "10",
+				"ADDRESS": "localhost:8080",
 			},
 			Config{
 				Address: Address{
 					Host: host,
 					Port: port,
 				},
-				PollInterval:   poll,
-				ReportInterval: report,
+				PollInterval:    2,
+				ReportInterval:  10,
+				StoreInterval:   0,
+				FileStoragePath: defaultPath,
+				Restore:         utils.ToPointer[bool](true),
 			},
 			false,
 		},
 		{
-			"should return empty",
-			map[string]string{},
+			"should parse correct 2",
+			map[string]string{
+				"ADDRESS":           "localhost:8080",
+				"POLL_INTERVAL":     "2",
+				"REPORT_INTERVAL":   "10",
+				"STORE_INTERVAL":    "10",
+				"RESTORE":           "false",
+				"FILE_STORAGE_PATH": "test",
+			},
 			Config{
-				PollInterval:   poll,
-				ReportInterval: report,
+				Address: Address{
+					Host: host,
+					Port: port,
+				},
+				PollInterval:    2,
+				ReportInterval:  10,
+				StoreInterval:   10,
+				FileStoragePath: "test",
+				Restore:         utils.ToPointer[bool](false),
 			},
 			false,
 		},
@@ -115,6 +132,8 @@ func TestAddress_Config(t *testing.T) {
 			}
 			cfg := NewConfigFromENV()
 			assert.Equal(t, tt.want, cfg)
+			assert.Equal(t, time.Duration(tt.want.ReportInterval)*time.Second, cfg.ReportDuration())
+			assert.Equal(t, time.Duration(tt.want.PollInterval)*time.Second, cfg.PollDuration())
 			os.Clearenv()
 		})
 	}

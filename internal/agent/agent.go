@@ -32,14 +32,14 @@ type MetricsAgent struct {
 func NewMetricsAgent(
 	cfg config.Config,
 ) *MetricsAgent {
-	colector := collector.NewRuntimeReader(cfg.PollInterval)
+	colector := collector.NewRuntimeReader(cfg.PollDuration())
 	client := resty.New()
 	reporter := reporter.NewAgentReporter(client, cfg.Address.ToString())
 	return &MetricsAgent{
 		reporter:       reporter,
 		collector:      colector,
-		reportInterval: cfg.ReportInterval,
-		pollInterval:   cfg.PollInterval,
+		reportInterval: cfg.ReportDuration(),
+		pollInterval:   cfg.PollDuration(),
 		queue:          make(chan collector.SystemInfo, 100),
 		batchSize:      int64(math.Ceil(float64(cfg.ReportInterval) / float64(cfg.PollInterval))),
 	}
