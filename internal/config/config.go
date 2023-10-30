@@ -20,7 +20,7 @@ const (
 	defaultPath           = "/tmp/metrics-db.json"
 	defaultReportInterval = 10
 	defaultPollInterval   = 2
-	defaultStoreInterval  = 0
+	defaultStoreInterval  = 300
 	shouldRestore         = true
 )
 
@@ -28,7 +28,7 @@ type Config struct {
 	Address         Address `env:"ADDRESS"`
 	ReportInterval  int     `env:"REPORT_INTERVAL"`
 	PollInterval    int     `env:"POLL_INTERVAL"`
-	StoreInterval   int     `env:"STORE_INTERVAL"`
+	StoreInterval   *int    `env:"STORE_INTERVAL"`
 	FileStoragePath string  `env:"FILE_STORAGE_PATH"`
 	Restore         *bool   `env:"RESTORE"`
 	Env             string  `env:"Env"`
@@ -43,7 +43,7 @@ func (c Config) PollDuration() time.Duration {
 }
 
 func (c Config) StoreDuration() time.Duration {
-	return time.Duration(c.StoreInterval) * time.Second
+	return time.Duration(*c.StoreInterval) * time.Second
 }
 
 type Address struct {
@@ -85,7 +85,7 @@ func (b Builder) WithPollInterval(t int) Builder {
 }
 
 func (b Builder) WithStoreInterval(t int) Builder {
-	b.config.StoreInterval = t
+	b.config.StoreInterval = utils.ToPointer[int](t)
 	return b
 }
 
@@ -135,6 +135,9 @@ func NewConfigFromENV() Config {
 	}
 	if cfg.ReportInterval == 0 {
 		cfg.ReportInterval = defaultReportInterval
+	}
+	if cfg.StoreInterval == nil {
+		cfg.StoreInterval = utils.ToPointer[int](defaultStoreInterval)
 	}
 	if cfg.FileStoragePath == "" {
 		cfg.FileStoragePath = defaultPath

@@ -77,9 +77,9 @@ func TestAddress_Config(t *testing.T) {
 				},
 				PollInterval:    2,
 				ReportInterval:  10,
-				StoreInterval:   0,
+				StoreInterval:   utils.ToPointer[int](defaultStoreInterval),
 				FileStoragePath: defaultPath,
-				Restore:         utils.ToPointer[bool](true),
+				Restore:         utils.ToPointer[bool](shouldRestore),
 			},
 			false,
 		},
@@ -93,11 +93,11 @@ func TestAddress_Config(t *testing.T) {
 					Host: host,
 					Port: port,
 				},
-				PollInterval:    2,
-				ReportInterval:  10,
-				StoreInterval:   0,
+				PollInterval:    defaultPollInterval,
+				ReportInterval:  defaultReportInterval,
+				StoreInterval:   utils.ToPointer[int](defaultStoreInterval),
 				FileStoragePath: defaultPath,
-				Restore:         utils.ToPointer[bool](true),
+				Restore:         utils.ToPointer[bool](shouldRestore),
 			},
 			false,
 		},
@@ -118,7 +118,7 @@ func TestAddress_Config(t *testing.T) {
 				},
 				PollInterval:    2,
 				ReportInterval:  10,
-				StoreInterval:   10,
+				StoreInterval:   utils.ToPointer[int](10),
 				FileStoragePath: "test",
 				Restore:         utils.ToPointer[bool](false),
 			},
@@ -134,6 +134,7 @@ func TestAddress_Config(t *testing.T) {
 			assert.Equal(t, tt.want, cfg)
 			assert.Equal(t, time.Duration(tt.want.ReportInterval)*time.Second, cfg.ReportDuration())
 			assert.Equal(t, time.Duration(tt.want.PollInterval)*time.Second, cfg.PollDuration())
+			assert.Equal(t, time.Duration(*tt.want.StoreInterval)*time.Second, cfg.StoreDuration())
 			os.Clearenv()
 		})
 	}
