@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/ekubyshin/metrics_agent/internal/handlers"
 	"github.com/ekubyshin/metrics_agent/internal/handlers/rest"
 	"github.com/ekubyshin/metrics_agent/internal/reporter"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
@@ -28,16 +29,18 @@ func Test_gzipReader(t *testing.T) {
 	request.Header.Add("Content-Encoding", "gzip")
 	request.Header.Add("Content-Type", "application/json")
 	router := chi.NewMux()
-	stg := storage.NewMemoryStorage[string, types.Gauge]()
-	stc := storage.NewMemoryStorage[string, types.Counter]()
+	st := storage.NewMemoryStorage[types.MetricsKey, types.Metrics]()
+	st.Put(
+		types.MetricsKey{ID: "test", MType: handlers.GaugeActionKey},
+		types.Metrics{ID: "test", MType: handlers.GaugeActionKey, Value: utils.ToPointer[float64](1.0)})
 	w := httptest.NewRecorder()
-	m := rest.NewRestHandler(stc, stg)
+	m := rest.NewRestHandler(st)
 	router.Use(gzipReader)
 	router.Post("/update/", m.Update)
 	router.ServeHTTP(w, request)
-	val, ok := stg.Get("test")
+	val, ok := st.Get(types.MetricsKey{ID: "test", MType: handlers.GaugeActionKey})
 	assert.True(t, ok)
-	assert.Equal(t, types.Gauge(1.0), val)
+	assert.Equal(t, types.Metrics{ID: "test", MType: handlers.GaugeActionKey, Value: utils.ToPointer[float64](1.0)}, val)
 	res := w.Result()
 	defer res.Body.Close()
 }
@@ -51,17 +54,18 @@ func Test_gzipWriter(t *testing.T) {
 	request.Header.Add("Accept-Encoding", "gzip")
 	request.Header.Add("Content-Type", "application/json")
 	router := chi.NewMux()
-	stg := storage.NewMemoryStorage[string, types.Gauge]()
-	stc := storage.NewMemoryStorage[string, types.Counter]()
-	stg.Put("test", types.Gauge(1.0))
+	st := storage.NewMemoryStorage[types.MetricsKey, types.Metrics]()
+	st.Put(
+		types.MetricsKey{ID: "test", MType: handlers.GaugeActionKey},
+		types.Metrics{ID: "test", MType: handlers.GaugeActionKey, Value: utils.ToPointer[float64](1.0)})
 	w := httptest.NewRecorder()
-	m := rest.NewRestHandler(stc, stg)
+	m := rest.NewRestHandler(st)
 	router.Use(gzipHandle)
 	router.Post("/value/", m.Value)
 	router.ServeHTTP(w, request)
-	val, ok := stg.Get("test")
+	val, ok := st.Get(types.MetricsKey{ID: "test", MType: handlers.GaugeActionKey})
 	assert.True(t, ok)
-	assert.Equal(t, types.Gauge(1.0), val)
+	assert.Equal(t, types.Metrics{ID: "test", MType: handlers.GaugeActionKey, Value: utils.ToPointer[float64](1.0)}, val)
 	res := w.Result()
 	defer res.Body.Close()
 	compB, err := reporter.Compress(bSend)

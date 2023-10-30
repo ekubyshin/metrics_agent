@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	cfg := config.AutoLoad()
+	cfg := config.AutoLoadServer()
 	var l logger.Logger
 	var err error
 	if cfg.Env == "production" {

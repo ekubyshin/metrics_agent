@@ -17,25 +17,15 @@ const (
 )
 
 type RestHandler struct {
-	route     string
-	dbCounter storage.Storage[string, types.Counter]
-	dbGauge   storage.Storage[string, types.Gauge]
-}
-
-type Metrics struct {
-	ID    string   `json:"id"`              // имя метрики
-	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
-	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
-	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
+	route string
+	db    storage.Storage[types.MetricsKey, types.Metrics]
 }
 
 func NewRestHandler(
-	dbCounter storage.Storage[string, types.Counter],
-	dbGauge storage.Storage[string, types.Gauge]) *RestHandler {
+	db storage.Storage[types.MetricsKey, types.Metrics]) *RestHandler {
 	return &RestHandler{
-		route:     "/",
-		dbCounter: dbCounter,
-		dbGauge:   dbGauge,
+		route: "/",
+		db:    db,
 	}
 }
 
@@ -56,7 +46,7 @@ func (h *RestHandler) Update(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		var newCounterVal types.Counter
-		if newCounterVal, ok = h.putCounter(metrics); !ok {
+		if newCounterVal, ok = h.putCounter(*metrics); !ok {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		} else {
@@ -83,19 +73,19 @@ func (h *RestHandler) Value(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if metrics.MType == handlers.GaugeActionKey {
-		val, ok := h.dbGauge.Get(metrics.ID)
+		val, ok := h.db.Get(metrics.Key())
 		if !ok {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		metrics.Value = utils.ToPointer[float64](float64(val))
+		metrics.Value = utils.ToPointer[float64](float64(*val.Value))
 	} else {
-		val, ok := h.dbCounter.Get(metrics.ID)
+		val, ok := h.db.Get(metrics.Key())
 		if !ok {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		metrics.Delta = utils.ToPointer[int64](int64(val))
+		metrics.Delta = utils.ToPointer[int64](int64(*val.Delta))
 	}
 	res, err := json.MarshalIndent(metrics, "", "  ")
 	if err != nil {
@@ -106,33 +96,38 @@ func (h *RestHandler) Value(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(res)
 }
 
-func (h *RestHandler) putGauge(m *Metrics) bool {
+func (h *RestHandler) putGauge(m *types.Metrics) bool {
 	if m.Value == nil {
 		return false
 	}
-	h.dbGauge.Put(m.ID, types.Gauge(*m.Value))
+	h.db.Put(m.Key(), *m)
 	return true
 }
 
-func (h *RestHandler) putCounter(m *Metrics) (types.Counter, bool) {
+func (h *RestHandler) putCounter(m types.Metrics) (types.Counter, bool) {
 	if m.Delta == nil {
 		return 0, false
 	}
-	nv := types.Counter(*m.Delta)
-	if v, ok := h.dbCounter.Get(m.ID); ok {
-		nv += v
+	nv := *m.Delta
+	if v, ok := h.db.Get(m.Key()); ok {
+		prev := int64(0)
+		if v.Delta != nil {
+			prev = *v.Delta
+		}
+		nv += prev
+		m.Delta = utils.ToPointer[int64](int64(nv))
 	}
-	h.dbCounter.Put(m.ID, nv)
-	return nv, true
+	h.db.Put(m.Key(), m)
+	return types.Counter(nv), true
 }
 
 func checkContentType(r *http.Request) bool {
 	return r.Header.Get(contentTypeHeader) == applicationJSON
 }
 
-func parseMetircs(r *http.Request) (*Metrics, bool) {
+func parseMetircs(r *http.Request) (*types.Metrics, bool) {
 	var buf bytes.Buffer
-	var metrics Metrics
+	var metrics types.Metrics
 	defer r.Body.Close()
 	_, err := buf.ReadFrom(r.Body)
 	if err != nil {

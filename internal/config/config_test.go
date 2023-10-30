@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ekubyshin/metrics_agent/internal/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -77,9 +76,9 @@ func TestAddress_Config(t *testing.T) {
 				},
 				PollInterval:    2,
 				ReportInterval:  10,
-				StoreInterval:   utils.ToPointer[int](defaultStoreInterval),
-				FileStoragePath: defaultPath,
-				Restore:         utils.ToPointer[bool](shouldRestore),
+				StoreInterval:   nil,
+				FileStoragePath: "",
+				Restore:         nil,
 			},
 			false,
 		},
@@ -95,32 +94,9 @@ func TestAddress_Config(t *testing.T) {
 				},
 				PollInterval:    defaultPollInterval,
 				ReportInterval:  defaultReportInterval,
-				StoreInterval:   utils.ToPointer[int](defaultStoreInterval),
-				FileStoragePath: defaultPath,
-				Restore:         utils.ToPointer[bool](shouldRestore),
-			},
-			false,
-		},
-		{
-			"should parse correct 2",
-			map[string]string{
-				"ADDRESS":           "localhost:8080",
-				"POLL_INTERVAL":     "2",
-				"REPORT_INTERVAL":   "10",
-				"STORE_INTERVAL":    "10",
-				"RESTORE":           "false",
-				"FILE_STORAGE_PATH": "test",
-			},
-			Config{
-				Address: Address{
-					Host: host,
-					Port: port,
-				},
-				PollInterval:    2,
-				ReportInterval:  10,
-				StoreInterval:   utils.ToPointer[int](10),
-				FileStoragePath: "test",
-				Restore:         utils.ToPointer[bool](false),
+				StoreInterval:   nil,
+				FileStoragePath: "",
+				Restore:         nil,
 			},
 			false,
 		},
@@ -130,11 +106,10 @@ func TestAddress_Config(t *testing.T) {
 			for k, v := range tt.env {
 				os.Setenv(k, v)
 			}
-			cfg := NewConfigFromENV()
+			cfg := NewAgentConfigFromENV()
 			assert.Equal(t, tt.want, cfg)
 			assert.Equal(t, time.Duration(tt.want.ReportInterval)*time.Second, cfg.ReportDuration())
 			assert.Equal(t, time.Duration(tt.want.PollInterval)*time.Second, cfg.PollDuration())
-			assert.Equal(t, time.Duration(*tt.want.StoreInterval)*time.Second, cfg.StoreDuration())
 			os.Clearenv()
 		})
 	}

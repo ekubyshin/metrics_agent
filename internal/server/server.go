@@ -28,14 +28,13 @@ type ChiServer struct {
 }
 
 func NewServer(endpoint config.Address, logger l.Logger) *ChiServer {
-	dbCounter := storage.NewMemoryStorage[string, types.Counter]()
-	dbGauge := storage.NewMemoryStorage[string, types.Gauge]()
+	db := storage.NewMemoryStorage[types.MetricsKey, types.Metrics]()
 	router := chi.NewRouter()
 	router.Use(l.NewRequestLogger(logger))
 	router.Use(l.NewResponseLogger(logger))
 	router.Use(gzipReader)
 	router.Use(gzipHandle)
-	registerRoutes(router, dbCounter, dbGauge)
+	registerRoutes(router, db)
 	return &ChiServer{
 		router:   router,
 		endpoint: endpoint,
@@ -44,14 +43,13 @@ func NewServer(endpoint config.Address, logger l.Logger) *ChiServer {
 
 func registerRoutes(
 	router *chi.Mux,
-	dbCounter storage.Storage[string, types.Counter],
-	dbGauge storage.Storage[string, types.Gauge]) {
-	gaugePostHandler := gauge.NewGaugePostHandler(dbGauge)
-	counterPostHandler := counter.NewCounterPostHandler(dbCounter)
-	gaugeGetHandler := gauge.NewGaugeGetHandler(dbGauge)
-	counterGetHanlder := counter.NewCounterGetHandler(dbCounter)
-	listHanlder := explorer.NewExplorerHandler(dbCounter, dbGauge)
-	restHandler := rest.NewRestHandler(dbCounter, dbGauge)
+	db storage.Storage[types.MetricsKey, types.Metrics]) {
+	gaugePostHandler := gauge.NewGaugePostHandler(db)
+	counterPostHandler := counter.NewCounterPostHandler(db)
+	gaugeGetHandler := gauge.NewGaugeGetHandler(db)
+	counterGetHanlder := counter.NewCounterGetHandler(db)
+	listHanlder := explorer.NewExplorerHandler(db)
+	restHandler := rest.NewRestHandler(db)
 	router.Get(listHanlder.BaseURL(), listHanlder.ServeHTTP)
 	router.Post("/update/{type}/{name}/{value}", func(w http.ResponseWriter, r *http.Request) {
 		t := chi.URLParam(r, handlers.ParamTypeKey)

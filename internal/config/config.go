@@ -124,17 +124,9 @@ func (a *Address) UnmarshalText(text []byte) error {
 	return nil
 }
 
-func NewConfigFromENV() Config {
-	cfg := Config{}
-	builder := NewBuilder()
+func NewServerConfigFromENV() (cfg Config) {
 	if err := env.Parse(&cfg); err != nil {
-		return builder.Build()
-	}
-	if cfg.PollInterval == 0 {
-		cfg.PollInterval = defaultPollInterval
-	}
-	if cfg.ReportInterval == 0 {
-		cfg.ReportInterval = defaultReportInterval
+		return
 	}
 	if cfg.StoreInterval == nil {
 		cfg.StoreInterval = utils.ToPointer[int](defaultStoreInterval)
@@ -145,13 +137,39 @@ func NewConfigFromENV() Config {
 	if cfg.Restore == nil {
 		cfg.Restore = utils.ToPointer[bool](shouldRestore)
 	}
-	return cfg
+	return
 }
 
-func NewConfigFromFlags() Config {
+func NewAgentConfigFromENV() (cfg Config) {
+	if err := env.Parse(&cfg); err != nil {
+		return
+	}
+	if cfg.PollInterval == 0 {
+		cfg.PollInterval = defaultPollInterval
+	}
+	if cfg.ReportInterval == 0 {
+		cfg.ReportInterval = defaultReportInterval
+	}
+	return
+}
+
+func NewAgentConfigFromFlags() Config {
 	endpoint := flag.String("a", "localhost:8080", "endpoint address")
 	reportInterval := flag.Int("r", defaultReportInterval, "report interval")
 	pollInterval := flag.Int("p", defaultPollInterval, "poll interval")
+	flag.Parse()
+	builer := NewBuilder()
+	address := &Address{}
+	_ = address.UnmarshalText([]byte(*endpoint))
+	return builer.
+		WithAddress(*address).
+		WithPollInterval(*pollInterval).
+		WithReportInterval(*reportInterval).
+		Build()
+}
+
+func NewServerConfigFromFlags() Config {
+	endpoint := flag.String("a", "localhost:8080", "endpoint address")
 	storeInterval := flag.Int("i", defaultStoreInterval, "store interval")
 	fileStorage := flag.String("f", defaultPath, "store db file path")
 	restore := flag.Bool("r", shouldRestore, "should restore db")
@@ -161,17 +179,22 @@ func NewConfigFromFlags() Config {
 	_ = address.UnmarshalText([]byte(*endpoint))
 	return builer.
 		WithAddress(*address).
-		WithPollInterval(*pollInterval).
-		WithReportInterval(*reportInterval).
 		WithStoreInterval(*storeInterval).
 		WithStoreFilePath(*fileStorage).
 		WithRestore(*restore).
 		Build()
 }
 
-func AutoLoad() Config {
+func AutoLoadAgent() Config {
 	if _, ok := os.LookupEnv("ADDRESS"); ok {
-		return NewConfigFromENV()
+		return NewAgentConfigFromENV()
 	}
-	return NewConfigFromFlags()
+	return NewAgentConfigFromFlags()
+}
+
+func AutoLoadServer() Config {
+	if _, ok := os.LookupEnv("ADDRESS"); ok {
+		return NewServerConfigFromENV()
+	}
+	return NewServerConfigFromFlags()
 }

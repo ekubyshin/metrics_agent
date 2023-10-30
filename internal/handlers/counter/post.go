@@ -7,15 +7,16 @@ import (
 	"github.com/ekubyshin/metrics_agent/internal/handlers"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
 	"github.com/ekubyshin/metrics_agent/internal/types"
+	"github.com/ekubyshin/metrics_agent/internal/utils"
 	"github.com/go-chi/chi/v5"
 )
 
 type CounterPostHandler struct {
 	route string
-	db    storage.Storage[string, types.Counter]
+	db    storage.Storage[types.MetricsKey, types.Metrics]
 }
 
-func NewCounterPostHandler(db storage.Storage[string, types.Counter]) handlers.Handler {
+func NewCounterPostHandler(db storage.Storage[types.MetricsKey, types.Metrics]) handlers.Handler {
 	return &CounterPostHandler{
 		route: "/counter/{name}/{value}",
 		db:    db,
@@ -34,10 +35,20 @@ func (m *CounterPostHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	if v, ok := m.db.Get(paramName); ok {
-		m.db.Put(paramName, types.Counter(parsedValue)+v)
+	key := types.MetricsKey{ID: paramName, MType: handlers.CounterActionKey}
+	if v, ok := m.db.Get(key); ok {
+		prev := int64(0)
+		if v.Delta != nil {
+			prev = *v.Delta
+		}
+		v.Delta = utils.ToPointer[int64](prev + parsedValue)
+		m.db.Put(key, v)
 	} else {
-		m.db.Put(paramName, types.Counter(parsedValue))
+		m.db.Put(key, types.Metrics{
+			ID:    paramName,
+			MType: handlers.CounterActionKey,
+			Delta: utils.ToPointer[int64](parsedValue),
+		})
 	}
 	w.WriteHeader(http.StatusOK)
 }
