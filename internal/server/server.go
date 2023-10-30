@@ -1,9 +1,12 @@
 package server
 
 import (
+	"bufio"
 	"compress/gzip"
+	"encoding/json"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/ekubyshin/metrics_agent/internal/config"
@@ -27,8 +30,11 @@ type ChiServer struct {
 	endpoint config.Address
 }
 
-func NewServer(endpoint config.Address, logger l.Logger) *ChiServer {
+func NewServer(cfg config.Config, logger l.Logger) *ChiServer {
 	db := storage.NewMemoryStorage[types.MetricsKey, types.Metrics]()
+	if cfg.Restore != nil && *cfg.Restore {
+		_ = RestoreStorage(db, cfg.FileStoragePath)
+	}
 	router := chi.NewRouter()
 	router.Use(l.NewRequestLogger(logger))
 	router.Use(l.NewResponseLogger(logger))
@@ -37,7 +43,7 @@ func NewServer(endpoint config.Address, logger l.Logger) *ChiServer {
 	registerRoutes(router, db)
 	return &ChiServer{
 		router:   router,
-		endpoint: endpoint,
+		endpoint: cfg.Address,
 	}
 }
 
@@ -131,4 +137,27 @@ func gzipHandle(next http.Handler) http.Handler {
 		w.Header().Set("Content-Encoding", "gzip")
 		next.ServeHTTP(gzipWriter{ResponseWriter: w, Writer: gz}, r)
 	})
+}
+
+func RestoreStorage(st storage.Storage[types.MetricsKey, types.Metrics], filename string) error {
+	file, err := os.OpenFile(filename, os.O_RDONLY, 0666)
+	if err != nil {
+		return err
+	}
+	defer file.Close() //nolint
+	reader := bufio.NewReader(file)
+	scanner := bufio.NewScanner(reader)
+	scanner.Split(bufio.ScanLines)
+	for {
+		if !scanner.Scan() {
+			break
+		}
+		m := types.Metrics{}
+		err := json.Unmarshal(scanner.Bytes(), &m)
+		if err != nil {
+			continue
+		}
+		st.Put(m.Key(), m)
+	}
+	return nil
 }

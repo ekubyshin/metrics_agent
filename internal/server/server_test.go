@@ -75,3 +75,44 @@ func Test_gzipWriter(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, string(compB), string(r))
 }
+
+func TestRestoreStorage(t *testing.T) {
+	type args struct {
+		filename string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			"ok",
+			args{
+				"./test/test.json",
+			},
+			false,
+		},
+		{
+			"false",
+			args{
+				"./test/test2.json",
+			},
+			true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			st := storage.NewMemoryStorage[types.MetricsKey, types.Metrics]()
+			err := RestoreStorage(st, tt.args.filename)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			if !tt.wantErr {
+				elems := st.List()
+				assert.Equal(t, 2, len(elems))
+			}
+		})
+	}
+}
