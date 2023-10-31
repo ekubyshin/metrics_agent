@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	cfg := config.AutoLoad()
+	cfg := config.AutoLoadAgent()
 	metricsAgent := agent.NewMetricsAgent(cfg)
 	metricsAgent.Start()
 }

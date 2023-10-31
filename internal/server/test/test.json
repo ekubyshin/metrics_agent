@@ -1,0 +1,2 @@
+{"id":"someCounter","type":"counter","delta":1}
+{"id":"someGauge","type":"gauge","value":1.1}

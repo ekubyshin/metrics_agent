@@ -8,7 +8,7 @@ type MemStorage[K any, V any] struct {
 	data sync.Map
 }
 
-func NewMemoryStorage[K any, V any]() Storage[K, V] {
+func NewMemoryStorage[K any, V any]() *MemStorage[K, V] {
 	return &MemStorage[K, V]{
 		data: sync.Map{},
 	}
