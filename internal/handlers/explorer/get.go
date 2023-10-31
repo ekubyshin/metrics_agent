@@ -10,31 +10,33 @@ import (
 )
 
 type ExplorerHandler struct {
-	route     string
-	dbCounter storage.Storage[string, types.Counter]
-	dbGauge   storage.Storage[string, types.Gauge]
+	route string
+	db    storage.Storage[types.MetricsKey, types.Metrics]
 }
 
-func NewExplorerHandler(dbCounter storage.Storage[string, types.Counter], dbGauge storage.Storage[string, types.Gauge]) handlers.Handler {
+func NewExplorerHandler(db storage.Storage[types.MetricsKey, types.Metrics]) handlers.Handler {
 	return &ExplorerHandler{
-		route:     "/",
-		dbCounter: dbCounter,
-		dbGauge:   dbGauge,
+		route: "/",
+		db:    db,
 	}
 }
 
 func (e *ExplorerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	elemsGauge := e.dbGauge.List()
-	elemsCounter := e.dbCounter.List()
-	out := make(map[string]any)
-	for _, v := range elemsGauge {
-		out[handlers.GaugeActionKey+"_"+v.Key] = v.Value
+	elems := e.db.List()
+	w.Header().Add("Content-type", "text/html")
+	if len(elems) == 0 {
+		_, _ = w.Write([]byte(`{}`))
+		return
 	}
-	for _, v := range elemsCounter {
-		out[handlers.CounterActionKey+"_"+v.Key] = v.Value
+	out := make(map[string]any)
+	for _, v := range elems {
+		if v.Value.Value == nil {
+			out[v.Key.MType+"_"+v.Key.ID] = v.Value.Delta
+			continue
+		}
+		out[v.Key.MType+"_"+v.Key.ID] = v.Value.Value
 	}
 	res, err := json.Marshal(out)
-	w.Header().Add("Content-type", "application/json")
 	if err == nil {
 		_, err = w.Write(res)
 		if err == nil {

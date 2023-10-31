@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/ekubyshin/metrics_agent/internal/collector"
-	"github.com/ekubyshin/metrics_agent/internal/reporter"
+	"github.com/ekubyshin/metrics_agent/internal/types"
+	"github.com/ekubyshin/metrics_agent/internal/utils"
 )
 
 func Test_convertSystemInfoToReport(t *testing.T) {
@@ -15,7 +16,7 @@ func Test_convertSystemInfoToReport(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want []reporter.Report
+		want []types.Metrics
 	}{
 		{
 			"check",
@@ -47,151 +48,163 @@ func Test_convertSystemInfoToReport(t *testing.T) {
 					Sys:           1.0,
 					TotalAlloc:    1.0,
 					RandomValue:   1.0,
+					MCacheSys:     1.0,
+					MSpanSys:      1.0,
 					PollCount:     1,
 				},
 			},
-			[]reporter.Report{
+			[]types.Metrics{
 				{
-					Type:  "gauge",
-					Name:  "Alloc",
-					Value: "1.0",
+					MType: "gauge",
+					ID:    "Alloc",
+					Value: utils.ToPointer[float64](1.0),
 				},
 				{
-					Type:  "gauge",
-					Name:  "BuckHashSys",
-					Value: "1.0",
+					MType: "gauge",
+					ID:    "BuckHashSys",
+					Value: utils.ToPointer[float64](1.0),
 				},
 				{
-					Type:  "gauge",
-					Name:  "Frees",
-					Value: "1.0",
+					MType: "gauge",
+					ID:    "Frees",
+					Value: utils.ToPointer[float64](1.0),
 				},
 				{
-					Type:  "gauge",
-					Name:  "GCCPUFraction",
-					Value: "1.0",
+					MType: "gauge",
+					ID:    "GCCPUFraction",
+					Value: utils.ToPointer[float64](1.0),
 				},
 				{
-					Type:  "gauge",
-					Name:  "GCSys",
-					Value: "1.0",
+					MType: "gauge",
+					ID:    "GCSys",
+					Value: utils.ToPointer[float64](1.0),
 				},
 				{
-					Type:  "gauge",
-					Name:  "HeapAlloc",
-					Value: "1.0",
+					MType: "gauge",
+					ID:    "HeapAlloc",
+					Value: utils.ToPointer[float64](1.0),
 				},
 				{
-					Type:  "gauge",
-					Name:  "HeapIdle",
-					Value: "1.0",
+					MType: "gauge",
+					ID:    "HeapIdle",
+					Value: utils.ToPointer[float64](1.0),
 				},
 				{
-					Type:  "gauge",
-					Name:  "HeapInuse",
-					Value: "1.0",
+					MType: "gauge",
+					ID:    "HeapInuse",
+					Value: utils.ToPointer[float64](1.0),
 				},
 				{
-					Type:  "gauge",
-					Name:  "HeapObjects",
-					Value: "1.0",
+					MType: "gauge",
+					ID:    "HeapObjects",
+					Value: utils.ToPointer[float64](1.0),
 				},
 				{
-					Type:  "gauge",
-					Name:  "HeapReleased",
-					Value: "1.0",
+					MType: "gauge",
+					ID:    "HeapReleased",
+					Value: utils.ToPointer[float64](1.0),
 				},
 				{
-					Type:  "gauge",
-					Name:  "HeapSys",
-					Value: "1.0",
+					MType: "gauge",
+					ID:    "HeapSys",
+					Value: utils.ToPointer[float64](1.0),
 				},
 				{
-					Type:  "gauge",
-					Name:  "LastGC",
-					Value: "1.0",
+					MType: "gauge",
+					ID:    "LastGC",
+					Value: utils.ToPointer[float64](1.0),
 				},
 				{
-					Type:  "gauge",
-					Name:  "Lookups",
-					Value: "1.0",
+					MType: "gauge",
+					ID:    "Lookups",
+					Value: utils.ToPointer[float64](1.0),
 				},
 				{
-					Type:  "gauge",
-					Name:  "MCacheInuse",
-					Value: "1.0",
+					MType: "gauge",
+					ID:    "MCacheInuse",
+					Value: utils.ToPointer[float64](1.0),
 				},
 				{
-					Type:  "gauge",
-					Name:  "MSpanInuse",
-					Value: "1.0",
+					MType: "gauge",
+					ID:    "MSpanInuse",
+					Value: utils.ToPointer[float64](1.0),
 				},
 				{
-					Type:  "gauge",
-					Name:  "Mallocs",
-					Value: "1.0",
+					MType: "gauge",
+					ID:    "Mallocs",
+					Value: utils.ToPointer[float64](1.0),
 				},
 				{
-					Type:  "gauge",
-					Name:  "NextGC",
-					Value: "1.0",
+					MType: "gauge",
+					ID:    "NextGC",
+					Value: utils.ToPointer[float64](1.0),
 				},
 				{
-					Type:  "gauge",
-					Name:  "NumForcedGC",
-					Value: "1.0",
+					MType: "gauge",
+					ID:    "NumForcedGC",
+					Value: utils.ToPointer[float64](1.0),
 				},
 				{
-					Type:  "gauge",
-					Name:  "NumGC",
-					Value: "1.0",
+					MType: "gauge",
+					ID:    "NumGC",
+					Value: utils.ToPointer[float64](1.0),
 				},
 				{
-					Type:  "gauge",
-					Name:  "OtherSys",
-					Value: "1.0",
+					MType: "gauge",
+					ID:    "OtherSys",
+					Value: utils.ToPointer[float64](1.0),
 				},
 				{
-					Type:  "gauge",
-					Name:  "PauseTotalNs",
-					Value: "1.0",
+					MType: "gauge",
+					ID:    "PauseTotalNs",
+					Value: utils.ToPointer[float64](1.0),
 				},
 				{
-					Type:  "gauge",
-					Name:  "StackInuse",
-					Value: "1.0",
+					MType: "gauge",
+					ID:    "StackInuse",
+					Value: utils.ToPointer[float64](1.0),
 				},
 				{
-					Type:  "gauge",
-					Name:  "StackSys",
-					Value: "1.0",
+					MType: "gauge",
+					ID:    "StackSys",
+					Value: utils.ToPointer[float64](1.0),
 				},
 				{
-					Type:  "gauge",
-					Name:  "Sys",
-					Value: "1.0",
+					MType: "gauge",
+					ID:    "Sys",
+					Value: utils.ToPointer[float64](1.0),
 				},
 				{
-					Type:  "gauge",
-					Name:  "TotalAlloc",
-					Value: "1.0",
+					MType: "gauge",
+					ID:    "TotalAlloc",
+					Value: utils.ToPointer[float64](1.0),
 				},
 				{
-					Type:  "gauge",
-					Name:  "RandomValue",
-					Value: "1.0",
+					MType: "gauge",
+					ID:    "RandomValue",
+					Value: utils.ToPointer[float64](1.0),
 				},
 				{
-					Type:  "counter",
-					Name:  "PollCount",
-					Value: "1",
+					MType: "gauge",
+					ID:    "MCacheSys",
+					Value: utils.ToPointer[float64](1.0),
+				},
+				{
+					MType: "gauge",
+					ID:    "MSpanSys",
+					Value: utils.ToPointer[float64](1.0),
+				},
+				{
+					MType: "counter",
+					ID:    "PollCount",
+					Delta: utils.ToPointer[int64](1),
 				},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := convertSystemInfoToReport(tt.args.info); !reflect.DeepEqual(got, tt.want) {
+			if got := convertSystemInfoToMetric(tt.args.info); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewRuntimeReader() = %v, want %v", got, tt.want)
 			}
 		})

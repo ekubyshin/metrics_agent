@@ -102,7 +102,7 @@ func TestCounterGetHandler_ServeHTTP(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			request := httptest.NewRequest(tt.fields.method, tt.fields.route, nil)
 			router := chi.NewMux()
-			st := storage.NewMemoryStorage[string, types.Counter]()
+			st := storage.NewMemoryStorage[types.MetricsKey, types.Metrics]()
 			mr := NewCounterGetHandler(st)
 			mw := NewCounterPostHandler(st)
 			w := httptest.NewRecorder()

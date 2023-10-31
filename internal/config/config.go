@@ -16,20 +16,37 @@ import (
 
 var regExp = regexp.MustCompile(`^\w+:[0-9]{2,5}$`)
 
-// Это промежуточная структура, которая принимает int
-// тк в тестах интервалы передаются в int, а не в duration
-// А мне хочется хранить в конфиге именно duration
-// поэтому я читаю int, а потом возвращаю уже нужную конфигу с duration
-type config struct {
-	Address        *Address `env:"ADDRESS"`
-	ReportInterval *int     `env:"REPORT_INTERVAL"`
-	PollInterval   *int     `env:"POLL_INTERVAL"`
-}
+const (
+	defaultPath           = "/tmp/metrics-db.json"
+	defaultReportInterval = 10
+	defaultPollInterval   = 2
+	defaultStoreInterval  = 300
+	shouldRestore         = true
+)
 
 type Config struct {
-	Address        Address       `env:"ADDRESS"`
-	ReportInterval time.Duration `env:"REPORT_INTERVAL"`
-	PollInterval   time.Duration `env:"POLL_INTERVAL"`
+	Address         Address `env:"ADDRESS"`
+	ReportInterval  int     `env:"REPORT_INTERVAL"`
+	PollInterval    int     `env:"POLL_INTERVAL"`
+	StoreInterval   *int    `env:"STORE_INTERVAL"`
+	FileStoragePath *string `env:"FILE_STORAGE_PATH"`
+	Restore         *bool   `env:"RESTORE"`
+	Env             string  `env:"Env"`
+}
+
+func (c Config) ReportDuration() time.Duration {
+	return time.Duration(c.ReportInterval) * time.Second
+}
+
+func (c Config) PollDuration() time.Duration {
+	return time.Duration(c.PollInterval) * time.Second
+}
+
+func (c Config) StoreDuration() time.Duration {
+	if c.StoreInterval == nil {
+		return time.Duration(defaultStoreInterval) * time.Second
+	}
+	return time.Duration(*c.StoreInterval) * time.Second
 }
 
 type Address struct {
@@ -61,12 +78,27 @@ func (b Builder) WithPort(port int) Builder {
 }
 
 func (b Builder) WithReportInterval(t int) Builder {
-	b.config.ReportInterval = utils.IntToDuration(t)
+	b.config.ReportInterval = t
 	return b
 }
 
 func (b Builder) WithPollInterval(t int) Builder {
-	b.config.PollInterval = utils.IntToDuration(t)
+	b.config.PollInterval = t
+	return b
+}
+
+func (b Builder) WithStoreInterval(t int) Builder {
+	b.config.StoreInterval = utils.ToPointer[int](t)
+	return b
+}
+
+func (b Builder) WithStoreFilePath(p string) Builder {
+	b.config.FileStoragePath = utils.ToPointer[string](p)
+	return b
+}
+
+func (b Builder) WithRestore(r bool) Builder {
+	b.config.Restore = &r
 	return b
 }
 
@@ -95,28 +127,39 @@ func (a *Address) UnmarshalText(text []byte) error {
 	return nil
 }
 
-func NewConfigFromENV() Config {
-	tcfg := &config{}
-	builder := NewBuilder()
-	if err := env.Parse(tcfg); err != nil {
-		return builder.Build()
+func NewServerConfigFromENV() (cfg Config) {
+	if err := env.Parse(&cfg); err != nil {
+		return
 	}
-	if tcfg.Address != nil {
-		builder = builder.WithAddress(*tcfg.Address)
+	if cfg.StoreInterval == nil {
+		cfg.StoreInterval = utils.ToPointer[int](defaultStoreInterval)
 	}
-	if tcfg.PollInterval != nil && *tcfg.PollInterval > 0 {
-		builder = builder.WithPollInterval(*tcfg.PollInterval)
+	if cfg.FileStoragePath == nil {
+		cfg.FileStoragePath = utils.ToPointer[string](defaultPath)
 	}
-	if tcfg.ReportInterval != nil && *tcfg.ReportInterval > 0 {
-		builder = builder.WithReportInterval(*tcfg.ReportInterval)
+	if cfg.Restore == nil {
+		cfg.Restore = utils.ToPointer[bool](shouldRestore)
 	}
-	return builder.Build()
+	return
 }
 
-func NewConfigFromFlags() Config {
+func NewAgentConfigFromENV() (cfg Config) {
+	if err := env.Parse(&cfg); err != nil {
+		return
+	}
+	if cfg.PollInterval == 0 {
+		cfg.PollInterval = defaultPollInterval
+	}
+	if cfg.ReportInterval == 0 {
+		cfg.ReportInterval = defaultReportInterval
+	}
+	return
+}
+
+func NewAgentConfigFromFlags() Config {
 	endpoint := flag.String("a", "localhost:8080", "endpoint address")
-	reportInterval := flag.Int("r", 10, "report interval")
-	pollInterval := flag.Int("p", 2, "poll interval")
+	reportInterval := flag.Int("r", defaultReportInterval, "report interval")
+	pollInterval := flag.Int("p", defaultPollInterval, "poll interval")
 	flag.Parse()
 	builer := NewBuilder()
 	address := &Address{}
@@ -128,9 +171,33 @@ func NewConfigFromFlags() Config {
 		Build()
 }
 
-func AutoLoad() Config {
+func NewServerConfigFromFlags() Config {
+	endpoint := flag.String("a", "localhost:8080", "endpoint address")
+	storeInterval := flag.Int("i", defaultStoreInterval, "store interval")
+	fileStorage := flag.String("f", defaultPath, "store db file path")
+	restore := flag.Bool("r", shouldRestore, "should restore db")
+	flag.Parse()
+	builer := NewBuilder()
+	address := &Address{}
+	_ = address.UnmarshalText([]byte(*endpoint))
+	return builer.
+		WithAddress(*address).
+		WithStoreInterval(*storeInterval).
+		WithStoreFilePath(*fileStorage).
+		WithRestore(*restore).
+		Build()
+}
+
+func AutoLoadAgent() Config {
 	if _, ok := os.LookupEnv("ADDRESS"); ok {
-		return NewConfigFromENV()
+		return NewAgentConfigFromENV()
 	}
-	return NewConfigFromFlags()
+	return NewAgentConfigFromFlags()
+}
+
+func AutoLoadServer() Config {
+	if _, ok := os.LookupEnv("ADDRESS"); ok {
+		return NewServerConfigFromENV()
+	}
+	return NewServerConfigFromFlags()
 }

@@ -95,6 +95,7 @@ func (r *RuntimeReader) convertToStat(st runtime.MemStats) *SystemInfo {
 		Sys:           types.Gauge(st.Sys),
 		TotalAlloc:    types.Gauge(st.TotalAlloc),
 		PollCount:     r.pollCounter,
+		MCacheSys:     types.Gauge(st.MCacheSys),
 		RandomValue:   types.Gauge(generateRandom()),
 	}
 }

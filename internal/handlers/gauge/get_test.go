@@ -6,8 +6,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/ekubyshin/metrics_agent/internal/handlers"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
 	"github.com/ekubyshin/metrics_agent/internal/types"
+	"github.com/ekubyshin/metrics_agent/internal/utils"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -58,14 +60,16 @@ func TestGaugeGetHandler_ServeHTTP(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			request := httptest.NewRequest("GET", tt.fields.route, nil)
 			router := chi.NewMux()
-			st := storage.NewMemoryStorage[string, types.Gauge]()
+			st := storage.NewMemoryStorage[types.MetricsKey, types.Metrics]()
 			mr := NewGaugeGetHandler(st)
 			mw := NewGaugePostHandler(st)
 			router.Get(mr.BaseURL(), mr.ServeHTTP)
 			router.Post(mw.BaseURL(), mw.ServeHTTP)
 			w := httptest.NewRecorder()
 			if tt.fields.valName != "" {
-				st.Put(tt.fields.valName, tt.fields.value)
+				st.Put(
+					types.MetricsKey{ID: tt.fields.valName, MType: handlers.GaugeActionKey},
+					types.Metrics{ID: tt.fields.valName, MType: handlers.GaugeActionKey, Value: utils.ToPointer[float64](float64(tt.fields.value))})
 			}
 			router.ServeHTTP(w, request)
 			res := w.Result()

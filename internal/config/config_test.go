@@ -56,8 +56,6 @@ func TestAddress_UnmarshalText(t *testing.T) {
 func TestAddress_Config(t *testing.T) {
 	host := "localhost"
 	port := 8080
-	poll := time.Duration(2) * time.Second
-	report := time.Duration(10) * time.Second
 	tests := []struct {
 		name    string
 		env     map[string]string
@@ -76,13 +74,16 @@ func TestAddress_Config(t *testing.T) {
 					Host: host,
 					Port: port,
 				},
-				PollInterval:   poll,
-				ReportInterval: report,
+				PollInterval:    2,
+				ReportInterval:  10,
+				StoreInterval:   nil,
+				FileStoragePath: nil,
+				Restore:         nil,
 			},
 			false,
 		},
 		{
-			"should parse correct",
+			"should parse correct 2",
 			map[string]string{
 				"ADDRESS": "localhost:8080",
 			},
@@ -91,13 +92,12 @@ func TestAddress_Config(t *testing.T) {
 					Host: host,
 					Port: port,
 				},
+				PollInterval:    defaultPollInterval,
+				ReportInterval:  defaultReportInterval,
+				StoreInterval:   nil,
+				FileStoragePath: nil,
+				Restore:         nil,
 			},
-			false,
-		},
-		{
-			"should return empty",
-			map[string]string{},
-			Config{},
 			false,
 		},
 	}
@@ -106,8 +106,10 @@ func TestAddress_Config(t *testing.T) {
 			for k, v := range tt.env {
 				os.Setenv(k, v)
 			}
-			cfg := NewConfigFromENV()
+			cfg := NewAgentConfigFromENV()
 			assert.Equal(t, tt.want, cfg)
+			assert.Equal(t, time.Duration(tt.want.ReportInterval)*time.Second, cfg.ReportDuration())
+			assert.Equal(t, time.Duration(tt.want.PollInterval)*time.Second, cfg.PollDuration())
 			os.Clearenv()
 		})
 	}
