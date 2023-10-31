@@ -29,7 +29,7 @@ type Config struct {
 	ReportInterval  int     `env:"REPORT_INTERVAL"`
 	PollInterval    int     `env:"POLL_INTERVAL"`
 	StoreInterval   *int    `env:"STORE_INTERVAL"`
-	FileStoragePath string  `env:"FILE_STORAGE_PATH"`
+	FileStoragePath *string `env:"FILE_STORAGE_PATH"`
 	Restore         *bool   `env:"RESTORE"`
 	Env             string  `env:"Env"`
 }
@@ -43,6 +43,9 @@ func (c Config) PollDuration() time.Duration {
 }
 
 func (c Config) StoreDuration() time.Duration {
+	if c.StoreInterval == nil {
+		return time.Duration(defaultStoreInterval) * time.Second
+	}
 	return time.Duration(*c.StoreInterval) * time.Second
 }
 
@@ -90,7 +93,7 @@ func (b Builder) WithStoreInterval(t int) Builder {
 }
 
 func (b Builder) WithStoreFilePath(p string) Builder {
-	b.config.FileStoragePath = p
+	b.config.FileStoragePath = utils.ToPointer[string](p)
 	return b
 }
 
@@ -131,8 +134,8 @@ func NewServerConfigFromENV() (cfg Config) {
 	if cfg.StoreInterval == nil {
 		cfg.StoreInterval = utils.ToPointer[int](defaultStoreInterval)
 	}
-	if cfg.FileStoragePath == "" {
-		cfg.FileStoragePath = defaultPath
+	if cfg.FileStoragePath == nil {
+		cfg.FileStoragePath = utils.ToPointer[string](defaultPath)
 	}
 	if cfg.Restore == nil {
 		cfg.Restore = utils.ToPointer[bool](shouldRestore)

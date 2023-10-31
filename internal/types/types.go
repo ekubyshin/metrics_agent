@@ -3,6 +3,10 @@ package types
 type Gauge float64
 type Counter int64
 
+type Keyable[K any] interface {
+	Key() K
+}
+
 type Metrics struct {
 	ID    string   `json:"id"`              // имя метрики
 	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
@@ -15,6 +19,6 @@ type MetricsKey struct {
 	MType string
 }
 
-func (m *Metrics) Key() MetricsKey {
+func (m Metrics) Key() MetricsKey {
 	return MetricsKey{ID: m.ID, MType: m.MType}
 }
