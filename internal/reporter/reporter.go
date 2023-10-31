@@ -48,14 +48,13 @@ func (r *AgentWriter) send(data types.Metrics) error {
 	}
 	compB, err := Compress(bSend)
 	if err == nil {
-		if h := r.client.Header.Get(contentEncoding); h == "" {
-			r.client.Header.Add(contentEncoding, "gzip")
-		}
 		bSend = compB
-	} else {
-		r.client.Header.Del(contentEncoding)
 	}
-	_, err = r.client.R().SetBody(bSend).Post("http://" + r.endpoint + path)
+	req := r.client.R().SetBody(bSend)
+	if err == nil {
+		req.SetHeader(contentEncoding, "gzip")
+	}
+	_, err = req.Post("http://" + r.endpoint + path)
 	if err != nil {
 		return err
 	}
