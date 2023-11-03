@@ -60,7 +60,7 @@ func TestGaugeHandler_ServeHTTP(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			request := httptest.NewRequest(tt.fields.method, tt.fields.route, nil)
 			router := chi.NewMux()
-			st := storage.NewMemoryStorage[string, types.Gauge]()
+			st := storage.NewMemoryStorage[types.MetricsKey, types.Metrics]()
 			m := NewGaugePostHandler(st)
 			w := httptest.NewRecorder()
 			router.Post(m.BaseURL(), m.ServeHTTP)

@@ -3,13 +3,14 @@ package agent
 import (
 	"math"
 	"reflect"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/ekubyshin/metrics_agent/internal/collector"
 	"github.com/ekubyshin/metrics_agent/internal/config"
 	"github.com/ekubyshin/metrics_agent/internal/reporter"
+	"github.com/ekubyshin/metrics_agent/internal/types"
+	"github.com/ekubyshin/metrics_agent/internal/utils"
 	"github.com/go-resty/resty/v2"
 )
 
@@ -31,14 +32,14 @@ type MetricsAgent struct {
 func NewMetricsAgent(
 	cfg config.Config,
 ) *MetricsAgent {
-	colector := collector.NewRuntimeReader(cfg.PollInterval)
+	colector := collector.NewRuntimeReader(cfg.PollDuration())
 	client := resty.New()
 	reporter := reporter.NewAgentReporter(client, cfg.Address.ToString())
 	return &MetricsAgent{
 		reporter:       reporter,
 		collector:      colector,
-		reportInterval: cfg.ReportInterval,
-		pollInterval:   cfg.PollInterval,
+		reportInterval: cfg.ReportDuration(),
+		pollInterval:   cfg.PollDuration(),
 		queue:          make(chan collector.SystemInfo, 100),
 		batchSize:      int64(math.Ceil(float64(cfg.ReportInterval) / float64(cfg.PollInterval))),
 	}
@@ -77,7 +78,7 @@ func (a *MetricsAgent) report() {
 		case st := <-a.queue:
 			count++
 			if count <= int(a.batchSize) {
-				a.reporter.WriteBatch(convertSystemInfoToReport(st))
+				a.reporter.WriteBatch(convertSystemInfoToMetric(st))
 			} else {
 				count = 0
 				time.Sleep(a.reportInterval)
@@ -86,24 +87,24 @@ func (a *MetricsAgent) report() {
 	}
 }
 
-func convertSystemInfoToReport(info collector.SystemInfo) []reporter.Report {
+func convertSystemInfoToMetric(info collector.SystemInfo) []types.Metrics {
 	v := reflect.ValueOf(info)
-	reports := make([]reporter.Report, v.NumField())
+	reports := make([]types.Metrics, v.NumField())
 	for f := 0; f < v.NumField(); f++ {
 		field := v.Field(f)
 		tName := field.Type().Name()
 		fieldName := v.Type().Field(f).Name
-		report := reporter.Report{
-			Type: strings.ToLower(tName),
-			Name: fieldName,
+		metric := types.Metrics{
+			ID:    fieldName,
+			MType: strings.ToLower(tName),
 		}
 		switch field.Kind() {
 		case reflect.Float64:
-			report.Value = strconv.FormatFloat(field.Float(), 'f', 1, 64)
+			metric.Value = utils.ToPointer[float64](field.Float())
 		case reflect.Int64:
-			report.Value = strconv.FormatInt(field.Int(), 10)
+			metric.Delta = utils.ToPointer[int64](field.Int())
 		}
-		reports[f] = report
+		reports[f] = metric
 	}
 	return reports
 }
