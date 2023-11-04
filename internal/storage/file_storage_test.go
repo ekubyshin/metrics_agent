@@ -35,6 +35,7 @@ func TestRestoreStorage(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			db := NewMemoryStorage[types.MetricsKey, types.Metrics]()
 			fs, err := NewFileStorage(db, tt.args.filename, true, 0)
+			defer func() { _ = fs.Close() }()
 			assert.NoError(t, err)
 			elems := fs.List()
 			assert.Equal(t, tt.want, len(elems))

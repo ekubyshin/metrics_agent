@@ -70,6 +70,10 @@ func NewFileStorage[K any, V types.Keyable[K]](
 	return fs, err
 }
 
+func (w *FileStorage[K, V]) Close() error {
+	return w.file.Close()
+}
+
 func (w *FileStorage[K, V]) restore() error {
 	reader := bufio.NewReader(w.file)
 	scanner := bufio.NewScanner(reader)
