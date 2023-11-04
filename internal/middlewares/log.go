@@ -1,8 +1,10 @@
-package logger
+package middlewares
 
 import (
 	"net/http"
 	"time"
+
+	lg "github.com/ekubyshin/metrics_agent/internal/logger"
 )
 
 type (
@@ -27,7 +29,7 @@ func (r *loggingResponseWriter) WriteHeader(statusCode int) {
 	r.responseData.status = statusCode
 }
 
-func NewResponseLogger(l Logger) func(http.Handler) http.Handler {
+func NewResponseLogger(l lg.Logger) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		logFn := func(w http.ResponseWriter, r *http.Request) {
 			responseData := &responseData{
@@ -51,7 +53,7 @@ func NewResponseLogger(l Logger) func(http.Handler) http.Handler {
 	}
 }
 
-func NewRequestLogger(l Logger) func(http.Handler) http.Handler {
+func NewRequestLogger(l lg.Logger) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		logFn := func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
