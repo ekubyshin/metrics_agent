@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/ekubyshin/metrics_agent/internal/metrics"
 	"github.com/ekubyshin/metrics_agent/internal/pointer"
-	"github.com/ekubyshin/metrics_agent/internal/types"
 	"github.com/go-resty/resty/v2"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
@@ -13,7 +13,7 @@ import (
 
 func TestAgentWriter_WriteBatch(t *testing.T) {
 	type args struct {
-		data []types.Metrics
+		data []metrics.Metrics
 	}
 	const endPoint = "localhost:8080"
 	tests := []struct {
@@ -24,7 +24,7 @@ func TestAgentWriter_WriteBatch(t *testing.T) {
 		{
 			"check ok",
 			args{
-				[]types.Metrics{
+				[]metrics.Metrics{
 					{
 						MType: "gauge",
 						ID:    "someCounter",
@@ -37,7 +37,7 @@ func TestAgentWriter_WriteBatch(t *testing.T) {
 		{
 			"check several",
 			args{
-				[]types.Metrics{
+				[]metrics.Metrics{
 					{
 						MType: "gauge",
 						ID:    "someCounter",
@@ -58,7 +58,7 @@ func TestAgentWriter_WriteBatch(t *testing.T) {
 			client := resty.New()
 			httpmock.ActivateNonDefault(client.GetClient())
 			defer httpmock.DeactivateAndReset()
-			resp, _ := httpmock.NewJsonResponder(200, types.Metrics{})
+			resp, _ := httpmock.NewJsonResponder(200, metrics.Metrics{})
 			httpmock.RegisterResponder(
 				"POST",
 				fmt.Sprintf("http://%v/update/", endPoint),

@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/ekubyshin/metrics_agent/internal/handlers"
+	"github.com/ekubyshin/metrics_agent/internal/metrics"
 	"github.com/ekubyshin/metrics_agent/internal/pointer"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
-	"github.com/ekubyshin/metrics_agent/internal/types"
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -46,7 +46,7 @@ func TestExplorerHandler_ServeHTTP(t *testing.T) {
 				{
 					Type:  "gauge",
 					Name:  "someMetric",
-					Value: types.Gauge(1.0),
+					Value: metrics.Gauge(1.0),
 				},
 			},
 			want{
@@ -61,17 +61,17 @@ func TestExplorerHandler_ServeHTTP(t *testing.T) {
 				{
 					Type:  "gauge",
 					Name:  "someMetric",
-					Value: types.Gauge(1.0),
+					Value: metrics.Gauge(1.0),
 				},
 				{
 					Type:  "gauge",
 					Name:  "someMetric2",
-					Value: types.Gauge(123.0),
+					Value: metrics.Gauge(123.0),
 				},
 				{
 					Type:  "counter",
 					Name:  "someMetric3",
-					Value: types.Counter(1),
+					Value: metrics.Counter(1),
 				},
 			},
 			want{
@@ -89,17 +89,17 @@ func TestExplorerHandler_ServeHTTP(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			request := httptest.NewRequest("GET", "/", nil)
 			router := chi.NewMux()
-			st := storage.NewMemoryStorage[types.MetricsKey, types.Metrics]()
+			st := storage.NewMemoryStorage[metrics.MetricsKey, metrics.Metrics]()
 			mr := NewExplorerHandler(st)
 			w := httptest.NewRecorder()
 			for _, v := range tt.args {
 				if v.Type == handlers.GaugeActionKey {
-					if val, ok := v.Value.(types.Gauge); ok {
-						st.Put(types.MetricsKey{ID: v.Name, MType: v.Type}, types.Metrics{ID: v.Name, MType: v.Type, Value: pointer.From[float64](float64(val))})
+					if val, ok := v.Value.(metrics.Gauge); ok {
+						st.Put(metrics.MetricsKey{ID: v.Name, MType: v.Type}, metrics.Metrics{ID: v.Name, MType: v.Type, Value: pointer.From[float64](float64(val))})
 					}
 				} else {
-					if val, ok := v.Value.(types.Counter); ok {
-						st.Put(types.MetricsKey{ID: v.Name, MType: v.Type}, types.Metrics{ID: v.Name, MType: v.Type, Delta: pointer.From[int64](int64(val))})
+					if val, ok := v.Value.(metrics.Counter); ok {
+						st.Put(metrics.MetricsKey{ID: v.Name, MType: v.Type}, metrics.Metrics{ID: v.Name, MType: v.Type, Delta: pointer.From[int64](int64(val))})
 					}
 				}
 			}

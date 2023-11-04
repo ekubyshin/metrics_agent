@@ -10,9 +10,9 @@ import (
 	"github.com/ekubyshin/metrics_agent/internal/handlers/gauge"
 	"github.com/ekubyshin/metrics_agent/internal/handlers/rest"
 	l "github.com/ekubyshin/metrics_agent/internal/logger"
+	"github.com/ekubyshin/metrics_agent/internal/metrics"
 	mw "github.com/ekubyshin/metrics_agent/internal/middlewares"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
-	"github.com/ekubyshin/metrics_agent/internal/types"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -26,8 +26,8 @@ type ChiServer struct {
 }
 
 func NewServer(cfg config.Config, logger l.Logger) *ChiServer {
-	db := storage.NewMemoryStorage[types.MetricsKey, types.Metrics]()
-	var w *storage.FileStorage[types.MetricsKey, types.Metrics]
+	db := storage.NewMemoryStorage[metrics.MetricsKey, metrics.Metrics]()
+	var w *storage.FileStorage[metrics.MetricsKey, metrics.Metrics]
 	var err error
 	if cfg.FileStoragePath != nil && *cfg.FileStoragePath != "" {
 		w, err = storage.NewFileStorage(db, *cfg.FileStoragePath, *cfg.Restore, cfg.StoreDuration())
@@ -54,7 +54,7 @@ func NewServer(cfg config.Config, logger l.Logger) *ChiServer {
 
 func registerRoutes(
 	router *chi.Mux,
-	db storage.Storage[types.MetricsKey, types.Metrics]) {
+	db storage.Storage[metrics.MetricsKey, metrics.Metrics]) {
 	gaugePostHandler := gauge.NewGaugePostHandler(db)
 	counterPostHandler := counter.NewCounterPostHandler(db)
 	gaugeGetHandler := gauge.NewGaugeGetHandler(db)

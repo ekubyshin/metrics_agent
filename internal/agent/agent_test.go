@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/ekubyshin/metrics_agent/internal/metrics"
 	"github.com/ekubyshin/metrics_agent/internal/pointer"
-	"github.com/ekubyshin/metrics_agent/internal/types"
 )
 
 func Test_convertSystemInfoToReport(t *testing.T) {
@@ -15,7 +15,7 @@ func Test_convertSystemInfoToReport(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want []types.Metrics
+		want []metrics.Metrics
 	}{
 		{
 			"check",
@@ -52,7 +52,7 @@ func Test_convertSystemInfoToReport(t *testing.T) {
 					PollCount:     1,
 				},
 			},
-			[]types.Metrics{
+			[]metrics.Metrics{
 				{
 					MType: "gauge",
 					ID:    "Alloc",

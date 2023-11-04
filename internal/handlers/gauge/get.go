@@ -5,17 +5,17 @@ import (
 	"strconv"
 
 	"github.com/ekubyshin/metrics_agent/internal/handlers"
+	"github.com/ekubyshin/metrics_agent/internal/metrics"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
-	"github.com/ekubyshin/metrics_agent/internal/types"
 	"github.com/go-chi/chi/v5"
 )
 
 type GaugeGetHandler struct {
 	route string
-	db    storage.Storage[types.MetricsKey, types.Metrics]
+	db    storage.Storage[metrics.MetricsKey, metrics.Metrics]
 }
 
-func NewGaugeGetHandler(db storage.Storage[types.MetricsKey, types.Metrics]) *GaugeGetHandler {
+func NewGaugeGetHandler(db storage.Storage[metrics.MetricsKey, metrics.Metrics]) *GaugeGetHandler {
 	return &GaugeGetHandler{
 		route: "/gauge/{name}",
 		db:    db,
@@ -29,7 +29,7 @@ func (m *GaugeGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if v, ok := m.db.Get(
-		types.MetricsKey{
+		metrics.MetricsKey{
 			ID:    paramName,
 			MType: handlers.GaugeActionKey,
 		}); ok {

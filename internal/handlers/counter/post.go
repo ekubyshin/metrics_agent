@@ -5,18 +5,18 @@ import (
 	"strconv"
 
 	"github.com/ekubyshin/metrics_agent/internal/handlers"
+	"github.com/ekubyshin/metrics_agent/internal/metrics"
 	"github.com/ekubyshin/metrics_agent/internal/pointer"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
-	"github.com/ekubyshin/metrics_agent/internal/types"
 	"github.com/go-chi/chi/v5"
 )
 
 type CounterPostHandler struct {
 	route string
-	db    storage.Storage[types.MetricsKey, types.Metrics]
+	db    storage.Storage[metrics.MetricsKey, metrics.Metrics]
 }
 
-func NewCounterPostHandler(db storage.Storage[types.MetricsKey, types.Metrics]) handlers.Handler {
+func NewCounterPostHandler(db storage.Storage[metrics.MetricsKey, metrics.Metrics]) handlers.Handler {
 	return &CounterPostHandler{
 		route: "/counter/{name}/{value}",
 		db:    db,
@@ -35,7 +35,7 @@ func (m *CounterPostHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	key := types.MetricsKey{ID: paramName, MType: handlers.CounterActionKey}
+	key := metrics.MetricsKey{ID: paramName, MType: handlers.CounterActionKey}
 	if v, ok := m.db.Get(key); ok {
 		prev := int64(0)
 		if v.Delta != nil {
@@ -44,7 +44,7 @@ func (m *CounterPostHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		v.Delta = pointer.From[int64](prev + parsedValue)
 		m.db.Put(key, v)
 	} else {
-		m.db.Put(key, types.Metrics{
+		m.db.Put(key, metrics.Metrics{
 			ID:    paramName,
 			MType: handlers.CounterActionKey,
 			Delta: pointer.From[int64](parsedValue),

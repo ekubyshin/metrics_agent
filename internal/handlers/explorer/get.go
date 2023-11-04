@@ -5,16 +5,16 @@ import (
 	"net/http"
 
 	"github.com/ekubyshin/metrics_agent/internal/handlers"
+	"github.com/ekubyshin/metrics_agent/internal/metrics"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
-	"github.com/ekubyshin/metrics_agent/internal/types"
 )
 
 type ExplorerHandler struct {
 	route string
-	db    storage.Storage[types.MetricsKey, types.Metrics]
+	db    storage.Storage[metrics.MetricsKey, metrics.Metrics]
 }
 
-func NewExplorerHandler(db storage.Storage[types.MetricsKey, types.Metrics]) handlers.Handler {
+func NewExplorerHandler(db storage.Storage[metrics.MetricsKey, metrics.Metrics]) handlers.Handler {
 	return &ExplorerHandler{
 		route: "/",
 		db:    db,

@@ -3,7 +3,7 @@ package storage
 import (
 	"testing"
 
-	"github.com/ekubyshin/metrics_agent/internal/types"
+	"github.com/ekubyshin/metrics_agent/internal/metrics"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -26,7 +26,7 @@ func TestRestoreStorage(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			db := NewMemoryStorage[types.MetricsKey, types.Metrics]()
+			db := NewMemoryStorage[metrics.MetricsKey, metrics.Metrics]()
 			fs, err := NewFileStorage(db, tt.args.filename, true, 0)
 			defer func() { _ = fs.Close() }()
 			assert.NoError(t, err)

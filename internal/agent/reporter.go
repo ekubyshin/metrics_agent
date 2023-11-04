@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"sync"
 
-	"github.com/ekubyshin/metrics_agent/internal/types"
+	"github.com/ekubyshin/metrics_agent/internal/metrics"
 	"github.com/go-resty/resty/v2"
 )
 
@@ -16,8 +16,8 @@ const (
 )
 
 type Writer interface {
-	Write(data types.Metrics) error
-	WriteBatch(data []types.Metrics) []error
+	Write(data metrics.Metrics) error
+	WriteBatch(data []metrics.Metrics) []error
 }
 
 type Report struct {
@@ -41,7 +41,7 @@ func NewAgentReporter(client *resty.Client, endpoint string) *AgentWriter {
 	}
 }
 
-func (r *AgentWriter) send(data types.Metrics) error {
+func (r *AgentWriter) send(data metrics.Metrics) error {
 	bSend, err := json.Marshal(data)
 	if err != nil {
 		return err
@@ -61,7 +61,7 @@ func (r *AgentWriter) send(data types.Metrics) error {
 	return err
 }
 
-func (r *AgentWriter) Write(data types.Metrics) error {
+func (r *AgentWriter) Write(data metrics.Metrics) error {
 	return r.send(data)
 }
 
@@ -82,12 +82,12 @@ func Compress(data []byte) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func (r *AgentWriter) WriteBatch(data []types.Metrics) []error {
+func (r *AgentWriter) WriteBatch(data []metrics.Metrics) []error {
 	var wg sync.WaitGroup
 	resp := make([]error, 0, len(data))
 	for _, v := range data {
 		wg.Add(1)
-		go func(v types.Metrics) {
+		go func(v metrics.Metrics) {
 			defer wg.Done()
 			err := r.Write(v)
 			if err != nil {

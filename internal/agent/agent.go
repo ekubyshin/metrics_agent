@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/ekubyshin/metrics_agent/internal/config"
+	"github.com/ekubyshin/metrics_agent/internal/metrics"
 	"github.com/ekubyshin/metrics_agent/internal/pointer"
-	"github.com/ekubyshin/metrics_agent/internal/types"
 	"github.com/go-resty/resty/v2"
 )
 
@@ -85,14 +85,14 @@ func (a *MetricsAgent) report() {
 	}
 }
 
-func convertSystemInfoToMetric(info SystemInfo) []types.Metrics {
+func convertSystemInfoToMetric(info SystemInfo) []metrics.Metrics {
 	v := reflect.ValueOf(info)
-	reports := make([]types.Metrics, v.NumField())
+	reports := make([]metrics.Metrics, v.NumField())
 	for f := 0; f < v.NumField(); f++ {
 		field := v.Field(f)
 		tName := field.Type().Name()
 		fieldName := v.Type().Field(f).Name
-		metric := types.Metrics{
+		metric := metrics.Metrics{
 			ID:    fieldName,
 			MType: strings.ToLower(tName),
 		}

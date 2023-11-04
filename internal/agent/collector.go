@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/ekubyshin/metrics_agent/internal/types"
+	"github.com/ekubyshin/metrics_agent/internal/metrics"
 )
 
 type Reader interface {
@@ -20,7 +20,7 @@ type RuntimeReader struct {
 	done         chan bool
 	closed       bool
 	pollInterval time.Duration
-	pollCounter  types.Counter
+	pollCounter  metrics.Counter
 }
 
 func NewRuntimeReader(pollInterval time.Duration) *RuntimeReader {
@@ -69,33 +69,33 @@ func (r *RuntimeReader) Stop() {
 
 func (r *RuntimeReader) convertToStat(st runtime.MemStats) *SystemInfo {
 	return &SystemInfo{
-		Alloc:         types.Gauge(st.Alloc),
-		BuckHashSys:   types.Gauge(st.BuckHashSys),
-		Frees:         types.Gauge(st.Frees),
-		GCCPUFraction: types.Gauge(st.GCCPUFraction),
-		GCSys:         types.Gauge(st.GCSys),
-		HeapAlloc:     types.Gauge(st.HeapAlloc),
-		HeapIdle:      types.Gauge(st.HeapIdle),
-		HeapInuse:     types.Gauge(st.HeapInuse),
-		HeapObjects:   types.Gauge(st.HeapObjects),
-		HeapReleased:  types.Gauge(st.HeapReleased),
-		HeapSys:       types.Gauge(st.HeapSys),
-		LastGC:        types.Gauge(st.LastGC),
-		Lookups:       types.Gauge(st.Lookups),
-		MCacheInuse:   types.Gauge(st.MCacheInuse),
-		MSpanInuse:    types.Gauge(st.MSpanInuse),
-		Mallocs:       types.Gauge(st.Mallocs),
-		NextGC:        types.Gauge(st.NextGC),
-		NumForcedGC:   types.Gauge(st.NumForcedGC),
-		NumGC:         types.Gauge(st.NumGC),
-		OtherSys:      types.Gauge(st.OtherSys),
-		PauseTotalNs:  types.Gauge(st.PauseTotalNs),
-		StackInuse:    types.Gauge(st.StackInuse),
-		StackSys:      types.Gauge(st.StackSys),
-		Sys:           types.Gauge(st.Sys),
-		TotalAlloc:    types.Gauge(st.TotalAlloc),
+		Alloc:         metrics.Gauge(st.Alloc),
+		BuckHashSys:   metrics.Gauge(st.BuckHashSys),
+		Frees:         metrics.Gauge(st.Frees),
+		GCCPUFraction: metrics.Gauge(st.GCCPUFraction),
+		GCSys:         metrics.Gauge(st.GCSys),
+		HeapAlloc:     metrics.Gauge(st.HeapAlloc),
+		HeapIdle:      metrics.Gauge(st.HeapIdle),
+		HeapInuse:     metrics.Gauge(st.HeapInuse),
+		HeapObjects:   metrics.Gauge(st.HeapObjects),
+		HeapReleased:  metrics.Gauge(st.HeapReleased),
+		HeapSys:       metrics.Gauge(st.HeapSys),
+		LastGC:        metrics.Gauge(st.LastGC),
+		Lookups:       metrics.Gauge(st.Lookups),
+		MCacheInuse:   metrics.Gauge(st.MCacheInuse),
+		MSpanInuse:    metrics.Gauge(st.MSpanInuse),
+		Mallocs:       metrics.Gauge(st.Mallocs),
+		NextGC:        metrics.Gauge(st.NextGC),
+		NumForcedGC:   metrics.Gauge(st.NumForcedGC),
+		NumGC:         metrics.Gauge(st.NumGC),
+		OtherSys:      metrics.Gauge(st.OtherSys),
+		PauseTotalNs:  metrics.Gauge(st.PauseTotalNs),
+		StackInuse:    metrics.Gauge(st.StackInuse),
+		StackSys:      metrics.Gauge(st.StackSys),
+		Sys:           metrics.Gauge(st.Sys),
+		TotalAlloc:    metrics.Gauge(st.TotalAlloc),
 		PollCount:     r.pollCounter,
-		MCacheSys:     types.Gauge(st.MCacheSys),
-		RandomValue:   types.Gauge(generateRandom()),
+		MCacheSys:     metrics.Gauge(st.MCacheSys),
+		RandomValue:   metrics.Gauge(generateRandom()),
 	}
 }
