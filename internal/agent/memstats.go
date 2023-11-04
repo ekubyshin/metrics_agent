@@ -1,4 +1,4 @@
-package collector
+package agent
 
 import (
 	"github.com/ekubyshin/metrics_agent/internal/types"

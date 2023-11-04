@@ -6,9 +6,9 @@ import (
 	"net/http"
 
 	"github.com/ekubyshin/metrics_agent/internal/handlers"
+	"github.com/ekubyshin/metrics_agent/internal/pointer"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
 	"github.com/ekubyshin/metrics_agent/internal/types"
-	"github.com/ekubyshin/metrics_agent/internal/utils"
 )
 
 const (
@@ -50,7 +50,7 @@ func (h *RestHandler) Update(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		} else {
-			metrics.Delta = utils.ToPointer[int64](int64(newCounterVal))
+			metrics.Delta = pointer.From[int64](int64(newCounterVal))
 		}
 	}
 	res, err := json.MarshalIndent(metrics, "", "  ")
@@ -78,14 +78,14 @@ func (h *RestHandler) Value(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		metrics.Value = utils.ToPointer[float64](float64(*val.Value))
+		metrics.Value = pointer.From[float64](float64(*val.Value))
 	} else {
 		val, ok := h.db.Get(metrics.Key())
 		if !ok {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		metrics.Delta = utils.ToPointer[int64](int64(*val.Delta))
+		metrics.Delta = pointer.From[int64](int64(*val.Delta))
 	}
 	res, err := json.MarshalIndent(metrics, "", "  ")
 	if err != nil {
@@ -115,7 +115,7 @@ func (h *RestHandler) putCounter(m types.Metrics) (types.Counter, bool) {
 			prev = *v.Delta
 		}
 		nv += prev
-		m.Delta = utils.ToPointer[int64](int64(nv))
+		m.Delta = pointer.From[int64](int64(nv))
 	}
 	h.db.Put(m.Key(), m)
 	return types.Counter(nv), true

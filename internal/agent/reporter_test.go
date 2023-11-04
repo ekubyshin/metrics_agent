@@ -1,11 +1,11 @@
-package reporter
+package agent
 
 import (
 	"fmt"
 	"testing"
 
+	"github.com/ekubyshin/metrics_agent/internal/pointer"
 	"github.com/ekubyshin/metrics_agent/internal/types"
-	"github.com/ekubyshin/metrics_agent/internal/utils"
 	"github.com/go-resty/resty/v2"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
@@ -28,7 +28,7 @@ func TestAgentWriter_WriteBatch(t *testing.T) {
 					{
 						MType: "gauge",
 						ID:    "someCounter",
-						Value: utils.ToPointer[float64](1.0),
+						Value: pointer.From[float64](1.0),
 					},
 				},
 			},
@@ -41,12 +41,12 @@ func TestAgentWriter_WriteBatch(t *testing.T) {
 					{
 						MType: "gauge",
 						ID:    "someCounter",
-						Value: utils.ToPointer[float64](1.0),
+						Value: pointer.From[float64](1.0),
 					},
 					{
 						MType: "counter",
 						ID:    "someCounter",
-						Delta: utils.ToPointer[int64](1),
+						Delta: pointer.From[int64](1),
 					},
 				},
 			},

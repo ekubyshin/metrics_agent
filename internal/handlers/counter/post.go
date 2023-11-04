@@ -5,9 +5,9 @@ import (
 	"strconv"
 
 	"github.com/ekubyshin/metrics_agent/internal/handlers"
+	"github.com/ekubyshin/metrics_agent/internal/pointer"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
 	"github.com/ekubyshin/metrics_agent/internal/types"
-	"github.com/ekubyshin/metrics_agent/internal/utils"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -41,13 +41,13 @@ func (m *CounterPostHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if v.Delta != nil {
 			prev = *v.Delta
 		}
-		v.Delta = utils.ToPointer[int64](prev + parsedValue)
+		v.Delta = pointer.From[int64](prev + parsedValue)
 		m.db.Put(key, v)
 	} else {
 		m.db.Put(key, types.Metrics{
 			ID:    paramName,
 			MType: handlers.CounterActionKey,
-			Delta: utils.ToPointer[int64](parsedValue),
+			Delta: pointer.From[int64](parsedValue),
 		})
 	}
 	w.WriteHeader(http.StatusOK)

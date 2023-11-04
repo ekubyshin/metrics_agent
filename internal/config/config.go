@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/caarlos0/env/v9"
-	"github.com/ekubyshin/metrics_agent/internal/utils"
+	"github.com/ekubyshin/metrics_agent/internal/pointer"
 )
 
 var regExp = regexp.MustCompile(`^\w+:[0-9]{2,5}$`)
@@ -88,12 +88,12 @@ func (b Builder) WithPollInterval(t int) Builder {
 }
 
 func (b Builder) WithStoreInterval(t int) Builder {
-	b.config.StoreInterval = utils.ToPointer[int](t)
+	b.config.StoreInterval = pointer.From[int](t)
 	return b
 }
 
 func (b Builder) WithStoreFilePath(p string) Builder {
-	b.config.FileStoragePath = utils.ToPointer[string](p)
+	b.config.FileStoragePath = pointer.From[string](p)
 	return b
 }
 
@@ -132,13 +132,13 @@ func NewServerConfigFromENV() (cfg Config) {
 		return
 	}
 	if cfg.StoreInterval == nil {
-		cfg.StoreInterval = utils.ToPointer[int](defaultStoreInterval)
+		cfg.StoreInterval = pointer.From[int](defaultStoreInterval)
 	}
 	if cfg.FileStoragePath == nil {
-		cfg.FileStoragePath = utils.ToPointer[string](defaultPath)
+		cfg.FileStoragePath = pointer.From[string](defaultPath)
 	}
 	if cfg.Restore == nil {
-		cfg.Restore = utils.ToPointer[bool](shouldRestore)
+		cfg.Restore = pointer.From[bool](shouldRestore)
 	}
 	return
 }

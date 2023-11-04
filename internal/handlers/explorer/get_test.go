@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/ekubyshin/metrics_agent/internal/handlers"
+	"github.com/ekubyshin/metrics_agent/internal/pointer"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
 	"github.com/ekubyshin/metrics_agent/internal/types"
-	"github.com/ekubyshin/metrics_agent/internal/utils"
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -95,11 +95,11 @@ func TestExplorerHandler_ServeHTTP(t *testing.T) {
 			for _, v := range tt.args {
 				if v.Type == handlers.GaugeActionKey {
 					if val, ok := v.Value.(types.Gauge); ok {
-						st.Put(types.MetricsKey{ID: v.Name, MType: v.Type}, types.Metrics{ID: v.Name, MType: v.Type, Value: utils.ToPointer[float64](float64(val))})
+						st.Put(types.MetricsKey{ID: v.Name, MType: v.Type}, types.Metrics{ID: v.Name, MType: v.Type, Value: pointer.From[float64](float64(val))})
 					}
 				} else {
 					if val, ok := v.Value.(types.Counter); ok {
-						st.Put(types.MetricsKey{ID: v.Name, MType: v.Type}, types.Metrics{ID: v.Name, MType: v.Type, Delta: utils.ToPointer[int64](int64(val))})
+						st.Put(types.MetricsKey{ID: v.Name, MType: v.Type}, types.Metrics{ID: v.Name, MType: v.Type, Delta: pointer.From[int64](int64(val))})
 					}
 				}
 			}
