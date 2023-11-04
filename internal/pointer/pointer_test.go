@@ -1,4 +1,4 @@
-package utils
+package pointer
 
 import (
 	"testing"
@@ -59,7 +59,7 @@ func TestToPointer(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := ToPointer(tt.args.val)
+			got := From(tt.args.val)
 			assert.Equal(t, tt.args.val, *got)
 		})
 	}

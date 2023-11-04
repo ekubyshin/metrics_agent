@@ -5,17 +5,17 @@ import (
 	"strconv"
 
 	"github.com/ekubyshin/metrics_agent/internal/handlers"
+	"github.com/ekubyshin/metrics_agent/internal/metrics"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
-	"github.com/ekubyshin/metrics_agent/internal/types"
 	"github.com/go-chi/chi/v5"
 )
 
 type CounterGetHandler struct {
 	route string
-	db    storage.Storage[types.MetricsKey, types.Metrics]
+	db    storage.Storage[metrics.MetricsKey, metrics.Metrics]
 }
 
-func NewCounterGetHandler(db storage.Storage[types.MetricsKey, types.Metrics]) handlers.Handler {
+func NewCounterGetHandler(db storage.Storage[metrics.MetricsKey, metrics.Metrics]) handlers.Handler {
 	return &CounterGetHandler{
 		route: "/counter/{name}",
 		db:    db,
@@ -28,7 +28,7 @@ func (m *CounterGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	if v, ok := m.db.Get(types.MetricsKey{ID: paramName, MType: handlers.CounterActionKey}); ok {
+	if v, ok := m.db.Get(metrics.MetricsKey{ID: paramName, MType: handlers.CounterActionKey}); ok {
 		_, err := w.Write([]byte(strconv.FormatInt(*v.Delta, 10)))
 		if err == nil {
 			return

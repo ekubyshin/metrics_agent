@@ -6,11 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ekubyshin/metrics_agent/internal/collector"
 	"github.com/ekubyshin/metrics_agent/internal/config"
-	"github.com/ekubyshin/metrics_agent/internal/reporter"
-	"github.com/ekubyshin/metrics_agent/internal/types"
-	"github.com/ekubyshin/metrics_agent/internal/utils"
+	"github.com/ekubyshin/metrics_agent/internal/metrics"
+	"github.com/ekubyshin/metrics_agent/internal/pointer"
 	"github.com/go-resty/resty/v2"
 )
 
@@ -19,11 +17,11 @@ type Agent interface {
 }
 
 type MetricsAgent struct {
-	reporter       reporter.Writer
-	collector      collector.Reader
+	reporter       Writer
+	collector      Reader
 	reportInterval time.Duration
 	pollInterval   time.Duration
-	queue          chan collector.SystemInfo
+	queue          chan SystemInfo
 	done           chan bool
 	batchSize      int64
 	canceled       bool
@@ -32,15 +30,15 @@ type MetricsAgent struct {
 func NewMetricsAgent(
 	cfg config.Config,
 ) *MetricsAgent {
-	colector := collector.NewRuntimeReader(cfg.PollDuration())
+	collector := NewRuntimeReader(cfg.PollDuration())
 	client := resty.New()
-	reporter := reporter.NewAgentReporter(client, cfg.Address.ToString())
+	reporter := NewAgentReporter(client, cfg.Address.ToString())
 	return &MetricsAgent{
 		reporter:       reporter,
-		collector:      colector,
+		collector:      collector,
 		reportInterval: cfg.ReportDuration(),
 		pollInterval:   cfg.PollDuration(),
-		queue:          make(chan collector.SystemInfo, 100),
+		queue:          make(chan SystemInfo, 100),
 		batchSize:      int64(math.Ceil(float64(cfg.ReportInterval) / float64(cfg.PollInterval))),
 	}
 }
@@ -87,22 +85,22 @@ func (a *MetricsAgent) report() {
 	}
 }
 
-func convertSystemInfoToMetric(info collector.SystemInfo) []types.Metrics {
+func convertSystemInfoToMetric(info SystemInfo) []metrics.Metrics {
 	v := reflect.ValueOf(info)
-	reports := make([]types.Metrics, v.NumField())
+	reports := make([]metrics.Metrics, v.NumField())
 	for f := 0; f < v.NumField(); f++ {
 		field := v.Field(f)
 		tName := field.Type().Name()
 		fieldName := v.Type().Field(f).Name
-		metric := types.Metrics{
+		metric := metrics.Metrics{
 			ID:    fieldName,
 			MType: strings.ToLower(tName),
 		}
 		switch field.Kind() {
 		case reflect.Float64:
-			metric.Value = utils.ToPointer[float64](field.Float())
+			metric.Value = pointer.From[float64](field.Float())
 		case reflect.Int64:
-			metric.Delta = utils.ToPointer[int64](field.Int())
+			metric.Delta = pointer.From[int64](field.Int())
 		}
 		reports[f] = metric
 	}

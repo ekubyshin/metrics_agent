@@ -4,24 +4,23 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/ekubyshin/metrics_agent/internal/collector"
-	"github.com/ekubyshin/metrics_agent/internal/types"
-	"github.com/ekubyshin/metrics_agent/internal/utils"
+	"github.com/ekubyshin/metrics_agent/internal/metrics"
+	"github.com/ekubyshin/metrics_agent/internal/pointer"
 )
 
 func Test_convertSystemInfoToReport(t *testing.T) {
 	type args struct {
-		info collector.SystemInfo
+		info SystemInfo
 	}
 	tests := []struct {
 		name string
 		args args
-		want []types.Metrics
+		want []metrics.Metrics
 	}{
 		{
 			"check",
 			args{
-				info: collector.SystemInfo{
+				info: SystemInfo{
 					Alloc:         1.0,
 					BuckHashSys:   1.0,
 					Frees:         1.0,
@@ -53,151 +52,151 @@ func Test_convertSystemInfoToReport(t *testing.T) {
 					PollCount:     1,
 				},
 			},
-			[]types.Metrics{
+			[]metrics.Metrics{
 				{
 					MType: "gauge",
 					ID:    "Alloc",
-					Value: utils.ToPointer[float64](1.0),
+					Value: pointer.From[float64](1.0),
 				},
 				{
 					MType: "gauge",
 					ID:    "BuckHashSys",
-					Value: utils.ToPointer[float64](1.0),
+					Value: pointer.From[float64](1.0),
 				},
 				{
 					MType: "gauge",
 					ID:    "Frees",
-					Value: utils.ToPointer[float64](1.0),
+					Value: pointer.From[float64](1.0),
 				},
 				{
 					MType: "gauge",
 					ID:    "GCCPUFraction",
-					Value: utils.ToPointer[float64](1.0),
+					Value: pointer.From[float64](1.0),
 				},
 				{
 					MType: "gauge",
 					ID:    "GCSys",
-					Value: utils.ToPointer[float64](1.0),
+					Value: pointer.From[float64](1.0),
 				},
 				{
 					MType: "gauge",
 					ID:    "HeapAlloc",
-					Value: utils.ToPointer[float64](1.0),
+					Value: pointer.From[float64](1.0),
 				},
 				{
 					MType: "gauge",
 					ID:    "HeapIdle",
-					Value: utils.ToPointer[float64](1.0),
+					Value: pointer.From[float64](1.0),
 				},
 				{
 					MType: "gauge",
 					ID:    "HeapInuse",
-					Value: utils.ToPointer[float64](1.0),
+					Value: pointer.From[float64](1.0),
 				},
 				{
 					MType: "gauge",
 					ID:    "HeapObjects",
-					Value: utils.ToPointer[float64](1.0),
+					Value: pointer.From[float64](1.0),
 				},
 				{
 					MType: "gauge",
 					ID:    "HeapReleased",
-					Value: utils.ToPointer[float64](1.0),
+					Value: pointer.From[float64](1.0),
 				},
 				{
 					MType: "gauge",
 					ID:    "HeapSys",
-					Value: utils.ToPointer[float64](1.0),
+					Value: pointer.From[float64](1.0),
 				},
 				{
 					MType: "gauge",
 					ID:    "LastGC",
-					Value: utils.ToPointer[float64](1.0),
+					Value: pointer.From[float64](1.0),
 				},
 				{
 					MType: "gauge",
 					ID:    "Lookups",
-					Value: utils.ToPointer[float64](1.0),
+					Value: pointer.From[float64](1.0),
 				},
 				{
 					MType: "gauge",
 					ID:    "MCacheInuse",
-					Value: utils.ToPointer[float64](1.0),
+					Value: pointer.From[float64](1.0),
 				},
 				{
 					MType: "gauge",
 					ID:    "MSpanInuse",
-					Value: utils.ToPointer[float64](1.0),
+					Value: pointer.From[float64](1.0),
 				},
 				{
 					MType: "gauge",
 					ID:    "Mallocs",
-					Value: utils.ToPointer[float64](1.0),
+					Value: pointer.From[float64](1.0),
 				},
 				{
 					MType: "gauge",
 					ID:    "NextGC",
-					Value: utils.ToPointer[float64](1.0),
+					Value: pointer.From[float64](1.0),
 				},
 				{
 					MType: "gauge",
 					ID:    "NumForcedGC",
-					Value: utils.ToPointer[float64](1.0),
+					Value: pointer.From[float64](1.0),
 				},
 				{
 					MType: "gauge",
 					ID:    "NumGC",
-					Value: utils.ToPointer[float64](1.0),
+					Value: pointer.From[float64](1.0),
 				},
 				{
 					MType: "gauge",
 					ID:    "OtherSys",
-					Value: utils.ToPointer[float64](1.0),
+					Value: pointer.From[float64](1.0),
 				},
 				{
 					MType: "gauge",
 					ID:    "PauseTotalNs",
-					Value: utils.ToPointer[float64](1.0),
+					Value: pointer.From[float64](1.0),
 				},
 				{
 					MType: "gauge",
 					ID:    "StackInuse",
-					Value: utils.ToPointer[float64](1.0),
+					Value: pointer.From[float64](1.0),
 				},
 				{
 					MType: "gauge",
 					ID:    "StackSys",
-					Value: utils.ToPointer[float64](1.0),
+					Value: pointer.From[float64](1.0),
 				},
 				{
 					MType: "gauge",
 					ID:    "Sys",
-					Value: utils.ToPointer[float64](1.0),
+					Value: pointer.From[float64](1.0),
 				},
 				{
 					MType: "gauge",
 					ID:    "TotalAlloc",
-					Value: utils.ToPointer[float64](1.0),
+					Value: pointer.From[float64](1.0),
 				},
 				{
 					MType: "gauge",
 					ID:    "RandomValue",
-					Value: utils.ToPointer[float64](1.0),
+					Value: pointer.From[float64](1.0),
 				},
 				{
 					MType: "gauge",
 					ID:    "MCacheSys",
-					Value: utils.ToPointer[float64](1.0),
+					Value: pointer.From[float64](1.0),
 				},
 				{
 					MType: "gauge",
 					ID:    "MSpanSys",
-					Value: utils.ToPointer[float64](1.0),
+					Value: pointer.From[float64](1.0),
 				},
 				{
 					MType: "counter",
 					ID:    "PollCount",
-					Delta: utils.ToPointer[int64](1),
+					Delta: pointer.From[int64](1),
 				},
 			},
 		},

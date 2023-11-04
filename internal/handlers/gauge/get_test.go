@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/ekubyshin/metrics_agent/internal/handlers"
+	"github.com/ekubyshin/metrics_agent/internal/metrics"
+	"github.com/ekubyshin/metrics_agent/internal/pointer"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
-	"github.com/ekubyshin/metrics_agent/internal/types"
-	"github.com/ekubyshin/metrics_agent/internal/utils"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,7 +18,7 @@ import (
 func TestGaugeGetHandler_ServeHTTP(t *testing.T) {
 	type fields struct {
 		route   string
-		value   types.Gauge
+		value   metrics.Gauge
 		valName string
 	}
 	type want struct {
@@ -60,7 +60,7 @@ func TestGaugeGetHandler_ServeHTTP(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			request := httptest.NewRequest("GET", tt.fields.route, nil)
 			router := chi.NewMux()
-			st := storage.NewMemoryStorage[types.MetricsKey, types.Metrics]()
+			st := storage.NewMemoryStorage[metrics.MetricsKey, metrics.Metrics]()
 			mr := NewGaugeGetHandler(st)
 			mw := NewGaugePostHandler(st)
 			router.Get(mr.BaseURL(), mr.ServeHTTP)
@@ -68,8 +68,8 @@ func TestGaugeGetHandler_ServeHTTP(t *testing.T) {
 			w := httptest.NewRecorder()
 			if tt.fields.valName != "" {
 				st.Put(
-					types.MetricsKey{ID: tt.fields.valName, MType: handlers.GaugeActionKey},
-					types.Metrics{ID: tt.fields.valName, MType: handlers.GaugeActionKey, Value: utils.ToPointer[float64](float64(tt.fields.value))})
+					metrics.MetricsKey{ID: tt.fields.valName, MType: handlers.GaugeActionKey},
+					metrics.Metrics{ID: tt.fields.valName, MType: handlers.GaugeActionKey, Value: pointer.From[float64](float64(tt.fields.value))})
 			}
 			router.ServeHTTP(w, request)
 			res := w.Result()

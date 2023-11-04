@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"github.com/ekubyshin/metrics_agent/internal/config"
 	"go.uber.org/zap"
 )
 
@@ -12,6 +13,13 @@ type Logger interface {
 type DefaultLogger struct {
 	Writer *zap.SugaredLogger
 	logger *zap.Logger
+}
+
+func NewLoggerFromEnv(cfg *config.Config) (*DefaultLogger, error) {
+	if cfg.Env == "production" {
+		return NewProductionLogger()
+	}
+	return NewDevelopmentLogger()
 }
 
 func NewProductionLogger() (*DefaultLogger, error) {

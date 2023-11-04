@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/ekubyshin/metrics_agent/internal/metrics"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
-	"github.com/ekubyshin/metrics_agent/internal/types"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,7 +18,7 @@ func TestCounterGetHandler_ServeHTTP(t *testing.T) {
 	type fields struct {
 		route   string
 		method  string
-		value   types.Counter
+		value   metrics.Counter
 		valName string
 	}
 	type want struct {
@@ -102,7 +102,7 @@ func TestCounterGetHandler_ServeHTTP(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			request := httptest.NewRequest(tt.fields.method, tt.fields.route, nil)
 			router := chi.NewMux()
-			st := storage.NewMemoryStorage[types.MetricsKey, types.Metrics]()
+			st := storage.NewMemoryStorage[metrics.MetricsKey, metrics.Metrics]()
 			mr := NewCounterGetHandler(st)
 			mw := NewCounterPostHandler(st)
 			w := httptest.NewRecorder()

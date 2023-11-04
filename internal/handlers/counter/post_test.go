@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/ekubyshin/metrics_agent/internal/handlers"
+	"github.com/ekubyshin/metrics_agent/internal/metrics"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
-	"github.com/ekubyshin/metrics_agent/internal/types"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 )
@@ -86,7 +86,7 @@ func TestCounterHandler_ServeHTTP(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			request := httptest.NewRequest(tt.fields.method, tt.fields.route, nil)
 			router := chi.NewMux()
-			st := storage.NewMemoryStorage[types.MetricsKey, types.Metrics]()
+			st := storage.NewMemoryStorage[metrics.MetricsKey, metrics.Metrics]()
 			m := NewCounterPostHandler(st)
 			w := httptest.NewRecorder()
 			router.Post(m.BaseURL(), m.ServeHTTP)
@@ -95,7 +95,7 @@ func TestCounterHandler_ServeHTTP(t *testing.T) {
 			assert.Equal(t, tt.want.code, res.StatusCode)
 			defer res.Body.Close()
 			if res.StatusCode == http.StatusOK {
-				v, err := st.Get(types.MetricsKey{ID: tt.fields.key, MType: handlers.CounterActionKey})
+				v, err := st.Get(metrics.MetricsKey{ID: tt.fields.key, MType: handlers.CounterActionKey})
 				assert.True(t, err)
 				assert.Equal(t, tt.fields.value, *v.Delta)
 				assert.Equal(t, tt.want.contentType, res.Header.Get("Content-Type"))

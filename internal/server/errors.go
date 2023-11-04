@@ -1,4 +1,4 @@
-package types
+package server
 
 type MetricsHandlerInvalidType struct{}
 type MetricsHandlerInvalidName struct{}

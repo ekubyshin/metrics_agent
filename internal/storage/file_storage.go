@@ -7,10 +7,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/ekubyshin/metrics_agent/internal/types"
+	"github.com/ekubyshin/metrics_agent/internal/metrics"
 )
 
-type FileStorage[K any, V types.Keyable[K]] struct {
+type FileStorage[K any, V metrics.Keyable[K]] struct {
 	st            *MemStorage[K, V]
 	Filename      string
 	file          *os.File
@@ -38,7 +38,7 @@ func (s FileStorage[K, V]) List() []KeyValuer[K, V] {
 	return s.st.List()
 }
 
-func NewFileStorage[K any, V types.Keyable[K]](
+func NewFileStorage[K any, V metrics.Keyable[K]](
 	st *MemStorage[K, V],
 	filename string,
 	restore bool,
@@ -68,6 +68,10 @@ func NewFileStorage[K any, V types.Keyable[K]](
 		}()
 	}
 	return fs, err
+}
+
+func (w *FileStorage[K, V]) Close() error {
+	return w.file.Close()
 }
 
 func (w *FileStorage[K, V]) restore() error {

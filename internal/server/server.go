@@ -1,20 +1,14 @@
 package server
 
 import (
-	"compress/gzip"
-	"io"
 	"net/http"
-	"strings"
 
 	"github.com/ekubyshin/metrics_agent/internal/config"
 	"github.com/ekubyshin/metrics_agent/internal/handlers"
-	"github.com/ekubyshin/metrics_agent/internal/handlers/counter"
-	"github.com/ekubyshin/metrics_agent/internal/handlers/explorer"
-	"github.com/ekubyshin/metrics_agent/internal/handlers/gauge"
-	"github.com/ekubyshin/metrics_agent/internal/handlers/rest"
 	l "github.com/ekubyshin/metrics_agent/internal/logger"
+	"github.com/ekubyshin/metrics_agent/internal/metrics"
+	mw "github.com/ekubyshin/metrics_agent/internal/middlewares"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
-	"github.com/ekubyshin/metrics_agent/internal/types"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -28,8 +22,8 @@ type ChiServer struct {
 }
 
 func NewServer(cfg config.Config, logger l.Logger) *ChiServer {
-	db := storage.NewMemoryStorage[types.MetricsKey, types.Metrics]()
-	var w *storage.FileStorage[types.MetricsKey, types.Metrics]
+	db := storage.NewMemoryStorage[metrics.MetricsKey, metrics.Metrics]()
+	var w *storage.FileStorage[metrics.MetricsKey, metrics.Metrics]
 	var err error
 	if cfg.FileStoragePath != nil && *cfg.FileStoragePath != "" {
 		w, err = storage.NewFileStorage(db, *cfg.FileStoragePath, *cfg.Restore, cfg.StoreDuration())
@@ -38,52 +32,20 @@ func NewServer(cfg config.Config, logger l.Logger) *ChiServer {
 		}
 	}
 	router := chi.NewRouter()
-	router.Use(l.NewRequestLogger(logger))
-	router.Use(l.NewResponseLogger(logger))
-	router.Use(gzipReader)
-	router.Use(gzipHandle)
+	router.Use(mw.NewRequestLogger(logger))
+	router.Use(mw.NewResponseLogger(logger))
+	router.Use(mw.GzipReader)
+	router.Use(mw.GzipHandler)
 	if w != nil {
-		registerRoutes(router, w)
+		RegisterRoutes(router, w)
 	} else {
-		registerRoutes(router, db)
+		RegisterRoutes(router, db)
 	}
 
 	return &ChiServer{
 		router:   router,
 		endpoint: cfg.Address,
 	}
-}
-
-func registerRoutes(
-	router *chi.Mux,
-	db storage.Storage[types.MetricsKey, types.Metrics]) {
-	gaugePostHandler := gauge.NewGaugePostHandler(db)
-	counterPostHandler := counter.NewCounterPostHandler(db)
-	gaugeGetHandler := gauge.NewGaugeGetHandler(db)
-	counterGetHanlder := counter.NewCounterGetHandler(db)
-	listHanlder := explorer.NewExplorerHandler(db)
-	restHandler := rest.NewRestHandler(db)
-	router.Get(listHanlder.BaseURL(), listHanlder.ServeHTTP)
-	router.Post("/update/{type}/{name}/{value}", func(w http.ResponseWriter, r *http.Request) {
-		t := chi.URLParam(r, handlers.ParamTypeKey)
-		switch t {
-		case handlers.GaugeActionKey:
-			gaugePostHandler.ServeHTTP(w, r)
-		case handlers.CounterActionKey:
-			counterPostHandler.ServeHTTP(w, r)
-		default:
-			w.WriteHeader(http.StatusNotImplemented)
-		}
-	})
-	router.Post("/update/{type}/", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(GetErrorStatusCode(r))
-	})
-	router.Route("/value", func(r chi.Router) {
-		r.Get(gaugeGetHandler.BaseURL(), gaugeGetHandler.ServeHTTP)
-		r.Get(counterGetHanlder.BaseURL(), counterGetHanlder.ServeHTTP)
-	})
-	router.Post("/update/", restHandler.Update)
-	router.Post("/value/", restHandler.Value)
 }
 
 func (s *ChiServer) Run() error {
@@ -100,48 +62,4 @@ func GetErrorStatusCode(r *http.Request) int {
 	default:
 		return http.StatusNotImplemented
 	}
-}
-
-type gzipWriter struct {
-	http.ResponseWriter
-	Writer io.Writer
-}
-
-func (w gzipWriter) Write(b []byte) (int, error) {
-	return w.Writer.Write(b)
-}
-
-func gzipReader(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
-			next.ServeHTTP(w, r)
-			return
-		}
-		oldBody := r.Body
-		defer oldBody.Close()
-		zr, err := gzip.NewReader(oldBody)
-		if err != nil {
-			io.WriteString(w, err.Error()) //nolint
-			return
-		}
-		r.Body = zr
-		next.ServeHTTP(w, r)
-	})
-}
-
-func gzipHandle(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
-			next.ServeHTTP(w, r)
-			return
-		}
-		gz, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
-		if err != nil {
-			io.WriteString(w, err.Error()) //nolint
-			return
-		}
-		defer gz.Close()
-		w.Header().Set("Content-Encoding", "gzip")
-		next.ServeHTTP(gzipWriter{ResponseWriter: w, Writer: gz}, r)
-	})
 }
