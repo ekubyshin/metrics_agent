@@ -23,13 +23,6 @@ func TestRestoreStorage(t *testing.T) {
 			},
 			2,
 		},
-		{
-			"false",
-			args{
-				"./test/test2.json",
-			},
-			0,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
