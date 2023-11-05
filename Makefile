@@ -28,4 +28,11 @@ lint: $(GOLANGCI_BIN) ## go lint
 ## '-test.run=^TestIteration7$\'
 .PHONE: ytest
 ytest: $(METRICSTEST) server agent
-	$(METRICSTEST) '-test.v' '-source-path=.' '-agent-binary-path=cmd/agent/agent' '-binary-path=cmd/server/server' '-server-port=8080'
+	$(METRICSTEST) '-test.v' \
+	'-test.run=^TestIteration10$\' \
+	'-source-path=.' \
+	'-agent-binary-path=cmd/agent/agent' \
+	'-binary-path=cmd/server/server' \
+	'-server-port=8080' \
+	'-file-storage-path=internal/storage/test/test2.json' \
+	'-database-dsn=user=postgres password=password dbname=postgres port=5432 sslmode=disable'

@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"testing"
 
 	"github.com/ekubyshin/metrics_agent/internal/metrics"
@@ -27,7 +28,9 @@ func TestRestoreStorage(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db := NewMemoryStorage[metrics.MetricsKey, metrics.Metrics]()
-			fs, err := NewFileStorage(db, tt.args.filename, true, 0)
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			fs, err := NewFileStorage(ctx, db, tt.args.filename, true, 0)
 			defer func() { _ = fs.Close() }()
 			assert.NoError(t, err)
 			elems := fs.List()

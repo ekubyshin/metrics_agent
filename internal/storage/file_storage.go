@@ -2,6 +2,7 @@ package storage
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"errors"
 	"os"
@@ -39,6 +40,7 @@ func (s FileStorage[K, V]) List() []KeyValuer[K, V] {
 }
 
 func NewFileStorage[K any, V metrics.Keyable[K]](
+	ctx context.Context,
 	st *MemStorage[K, V],
 	filename string,
 	restore bool,
@@ -62,8 +64,14 @@ func NewFileStorage[K any, V metrics.Keyable[K]](
 	if interval > 0 {
 		go func() {
 			for {
-				time.Sleep(interval)
-				_ = fs.flush()
+				select {
+				case <-ctx.Done():
+					_ = fs.Close()
+					return
+				default:
+					time.Sleep(interval)
+					_ = fs.flush()
+				}
 			}
 		}()
 	}
