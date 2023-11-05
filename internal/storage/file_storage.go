@@ -62,20 +62,24 @@ func NewFileStorage[K any, V metrics.Keyable[K]](
 		err = fs.restore()
 	}
 	if interval > 0 {
-		go func() {
-			for {
-				select {
-				case <-ctx.Done():
-					_ = fs.Close()
-					return
-				default:
-					time.Sleep(interval)
-					_ = fs.flush()
-				}
-			}
-		}()
+		fs.runInterval(ctx)
 	}
 	return fs, err
+}
+
+func (w *FileStorage[K, V]) runInterval(ctx context.Context) {
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				_ = w.Close()
+				return
+			default:
+				time.Sleep(w.storeInterval)
+				_ = w.flush()
+			}
+		}
+	}()
 }
 
 func (w *FileStorage[K, V]) Close() error {
