@@ -32,6 +32,7 @@ type Config struct {
 	FileStoragePath *string `env:"FILE_STORAGE_PATH"`
 	Restore         *bool   `env:"RESTORE"`
 	Env             string  `env:"Env"`
+	DBDSN           *string `env:"DATABASE_DSN"`
 }
 
 func (c Config) ReportDuration() time.Duration {
