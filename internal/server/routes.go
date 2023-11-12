@@ -17,10 +17,8 @@ import (
 func RegisterRoutes(
 	router *chi.Mux,
 	st storage.Storage[metrics.MetricsKey, metrics.Metrics]) {
-	gaugePostHandler := gauge.NewGaugePostHandler(st)
-	counterPostHandler := counter.NewCounterPostHandler(st)
-	gaugeGetHandler := gauge.NewGaugeGetHandler(st)
-	counterGetHanlder := counter.NewCounterGetHandler(st)
+	counterHandler := counter.NewCounterHandler(st)
+	gaugeHandler := gauge.NewGaugeHandler(st)
 	listHanlder := explorer.NewExplorerHandler(st)
 	restHandler := rest.NewRestHandler(st)
 	pingHandler := ping.NewPingHandler(st)
@@ -30,9 +28,9 @@ func RegisterRoutes(
 		t := chi.URLParam(r, handlers.ParamTypeKey)
 		switch t {
 		case handlers.GaugeActionKey:
-			gaugePostHandler.ServeHTTP(w, r)
+			gaugeHandler.Post(w, r)
 		case handlers.CounterActionKey:
-			counterPostHandler.ServeHTTP(w, r)
+			counterHandler.Post(w, r)
 		default:
 			w.WriteHeader(http.StatusNotImplemented)
 		}
@@ -41,8 +39,8 @@ func RegisterRoutes(
 		w.WriteHeader(GetErrorStatusCode(r))
 	})
 	router.Route("/value", func(r chi.Router) {
-		r.Get(gaugeGetHandler.BaseURL(), gaugeGetHandler.ServeHTTP)
-		r.Get(counterGetHanlder.BaseURL(), counterGetHanlder.ServeHTTP)
+		r.Get("/gauge/{name}", gaugeHandler.Get)
+		r.Get("/counter/{name}", counterHandler.Get)
 	})
 	router.Post("/update/", restHandler.Update)
 	router.Post("/value/", restHandler.Value)

@@ -31,7 +31,6 @@ DB_DSN:=user=postgres password=password dbname=postgres port=5432 sslmode=disabl
 .PHONY: ytest
 ytest: $(METRICSTEST) server agent
 	$(METRICSTEST) '-test.v' \
-	'-test.run=^TestIteration10$\' \
 	'-source-path=.' \
 	'-agent-binary-path=cmd/agent/agent' \
 	'-binary-path=cmd/server/server' \

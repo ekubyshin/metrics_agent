@@ -10,19 +10,22 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-type GaugeGetHandler struct {
-	route string
-	db    storage.Storage[metrics.MetricsKey, metrics.Metrics]
+const (
+	GetURL  = "/gauge/{name}"
+	PostURL = "/gauge/{name}/{value}"
+)
+
+type GaugeHandler struct {
+	db storage.Storage[metrics.MetricsKey, metrics.Metrics]
 }
 
-func NewGaugeGetHandler(db storage.Storage[metrics.MetricsKey, metrics.Metrics]) *GaugeGetHandler {
-	return &GaugeGetHandler{
-		route: "/gauge/{name}",
-		db:    db,
+func NewGaugeHandler(db storage.Storage[metrics.MetricsKey, metrics.Metrics]) *GaugeHandler {
+	return &GaugeHandler{
+		db: db,
 	}
 }
 
-func (m *GaugeGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (m *GaugeHandler) Get(w http.ResponseWriter, r *http.Request) {
 	paramName := chi.URLParam(r, handlers.ParamNameKey)
 	if paramName == "" {
 		w.WriteHeader(http.StatusBadRequest)
@@ -41,6 +44,24 @@ func (m *GaugeGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
 }
 
-func (m *GaugeGetHandler) BaseURL() string {
-	return m.route
+func (m *GaugeHandler) Post(w http.ResponseWriter, r *http.Request) {
+	paramName := chi.URLParam(r, handlers.ParamNameKey)
+	paramValue := chi.URLParam(r, handlers.ParamValueKey)
+	parsedValue, err := strconv.ParseFloat(paramValue, 64)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	m.db.Put(
+		metrics.MetricsKey{
+			ID:    paramName,
+			MType: handlers.GaugeActionKey,
+		},
+		metrics.Metrics{
+			ID:    paramName,
+			MType: handlers.GaugeActionKey,
+			Value: &parsedValue,
+		},
+	)
+	w.WriteHeader(http.StatusOK)
 }
