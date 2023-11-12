@@ -25,14 +25,13 @@ func NewServer(
 	cfg config.Config,
 	logger l.Logger,
 	st storage.Storage[metrics.MetricsKey, metrics.Metrics],
-	db *storage.DBStorage,
 ) *ChiServer {
 	router := chi.NewRouter()
 	router.Use(mw.NewRequestLogger(logger))
 	router.Use(mw.NewResponseLogger(logger))
 	router.Use(mw.GzipReader)
 	router.Use(mw.GzipHandler)
-	RegisterRoutes(router, st, db)
+	RegisterRoutes(router, st)
 
 	return &ChiServer{
 		router:   router,

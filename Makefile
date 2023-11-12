@@ -26,7 +26,9 @@ test:
 lint: $(GOLANGCI_BIN) ## go lint
 	$(GOLANGCI_BIN) run --fix ./...
 ## '-test.run=^TestIteration7$\'
-.PHONE: ytest
+
+DB_DSN:=user=postgres password=password dbname=postgres port=5432 sslmode=disable
+.PHONY: ytest
 ytest: $(METRICSTEST) server agent
 	$(METRICSTEST) '-test.v' \
 	'-test.run=^TestIteration10$\' \
@@ -35,4 +37,20 @@ ytest: $(METRICSTEST) server agent
 	'-binary-path=cmd/server/server' \
 	'-server-port=8080' \
 	'-file-storage-path=internal/storage/test/test2.json' \
-	'-database-dsn=user=postgres password=password dbname=postgres port=5432 sslmode=disable'
+	'-database-dsn=$(DB_DSN)'
+
+.PHONY: goose-create
+goose-create: $(GOOSE)
+	env GOOSE_MIGRATION_DIR=./migrations $(GOOSE) create init sql
+
+.PHONY: goose-up
+goose-up: $(GOOSE)
+	env GOOSE_MIGRATION_DIR=./migrations $(GOOSE) postgres "$(DB_DSN)" up
+
+.PHONY: goose-down
+goose-down: $(GOOSE)
+	env GOOSE_MIGRATION_DIR=./migrations $(GOOSE) postgres "$(DB_DSN)" down
+
+.PHONY: goose-validate
+goose-validate: $(GOOSE)
+	env GOOSE_MIGRATION_DIR=./migrations $(GOOSE) validate

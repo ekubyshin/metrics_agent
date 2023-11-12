@@ -16,15 +16,14 @@ import (
 
 func RegisterRoutes(
 	router *chi.Mux,
-	st storage.Storage[metrics.MetricsKey, metrics.Metrics],
-	db *storage.DBStorage) {
+	st storage.Storage[metrics.MetricsKey, metrics.Metrics]) {
 	gaugePostHandler := gauge.NewGaugePostHandler(st)
 	counterPostHandler := counter.NewCounterPostHandler(st)
 	gaugeGetHandler := gauge.NewGaugeGetHandler(st)
 	counterGetHanlder := counter.NewCounterGetHandler(st)
 	listHanlder := explorer.NewExplorerHandler(st)
 	restHandler := rest.NewRestHandler(st)
-	pingHandler := ping.NewPingHandler(db)
+	pingHandler := ping.NewPingHandler(st)
 	router.Get(listHanlder.BaseURL(), listHanlder.ServeHTTP)
 	router.Get(pingHandler.BaseURL(), pingHandler.ServeHTTP)
 	router.Post("/update/{type}/{name}/{value}", func(w http.ResponseWriter, r *http.Request) {

@@ -33,6 +33,10 @@ func (m *MemStorage[K, V]) Delete(key K) {
 	m.data.Delete(key)
 }
 
+func (m *MemStorage[K, V]) Ping() error {
+	return nil
+}
+
 func (m *MemStorage[K, V]) List() []KeyValuer[K, V] {
 	arr := make([]KeyValuer[K, V], 0, 100)
 	m.data.Range(func(key, value any) bool {

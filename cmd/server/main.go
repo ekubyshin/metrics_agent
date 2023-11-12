@@ -20,21 +20,23 @@ func main() {
 	var st storage.Storage[metrics.MetricsKey, metrics.Metrics]
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	memSt := storage.NewMemoryStorage[metrics.MetricsKey, metrics.Metrics]()
-	if cfg.FileStoragePath != nil && *cfg.FileStoragePath != "" {
-		st, err = storage.NewFileStorage(ctx, memSt, *cfg.FileStoragePath, *cfg.Restore, cfg.StoreDuration())
+	if cfg.DatabaseDSN != nil && *cfg.DatabaseDSN != "" {
+		st, err = storage.NewDBStorage[metrics.MetricsKey, metrics.Metrics](ctx, &cfg)
 		if err != nil {
-			panic(err)
+			l.Info("db", err)
 		}
 	} else {
-		st = memSt
+		memSt := storage.NewMemoryStorage[metrics.MetricsKey, metrics.Metrics]()
+		if cfg.FileStoragePath != nil && *cfg.FileStoragePath != "" {
+			st, err = storage.NewFileStorage(ctx, memSt, *cfg.FileStoragePath, *cfg.Restore, cfg.StoreDuration())
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			st = memSt
+		}
 	}
-	db, err := storage.NewDBStorage(&cfg)
-	if err != nil {
-		l.Info("db", err)
-	}
-	defer db.Close()
-	srv := server.NewServer(cfg, l, st, db)
+	srv := server.NewServer(cfg, l, st)
 	err = srv.Run()
 	if err != nil {
 		panic(err)

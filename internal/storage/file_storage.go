@@ -67,6 +67,10 @@ func NewFileStorage[K any, V metrics.Keyable[K]](
 	return fs, err
 }
 
+func (w *FileStorage[K, V]) Ping() error {
+	return nil
+}
+
 func (w *FileStorage[K, V]) runInterval(ctx context.Context) {
 	go func() {
 		for {

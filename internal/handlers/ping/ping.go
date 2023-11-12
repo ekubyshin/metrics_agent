@@ -3,23 +3,24 @@ package ping
 import (
 	"net/http"
 
+	"github.com/ekubyshin/metrics_agent/internal/metrics"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
 )
 
 type PingHandler struct {
-	db    *storage.DBStorage
+	st    storage.Storage[metrics.MetricsKey, metrics.Metrics]
 	route string
 }
 
-func NewPingHandler(db *storage.DBStorage) *PingHandler {
+func NewPingHandler(st storage.Storage[metrics.MetricsKey, metrics.Metrics]) *PingHandler {
 	return &PingHandler{
-		db:    db,
+		st:    st,
 		route: "/ping",
 	}
 }
 
 func (m *PingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if m.db == nil || m.db.Ping() != nil {
+	if m.st == nil || m.st.Ping() != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

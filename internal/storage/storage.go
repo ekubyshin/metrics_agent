@@ -10,4 +10,5 @@ type Storage[K any, V any] interface {
 	Get(K) (V, bool)
 	Delete(K)
 	List() []KeyValuer[K, V]
+	Ping() error
 }
