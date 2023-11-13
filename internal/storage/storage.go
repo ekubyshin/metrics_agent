@@ -1,14 +1,17 @@
 package storage
 
+import "context"
+
 type KeyValuer[K any, V any] struct {
 	Key   K
 	Value V
 }
 
 type Storage[K any, V any] interface {
-	Put(K, V)
-	Get(K) (V, bool)
-	Delete(K)
-	List() []KeyValuer[K, V]
-	Ping() error
+	Put(context.Context, K, V) error
+	Get(context.Context, K) (V, bool)
+	Delete(context.Context, K) error
+	List(context.Context) ([]KeyValuer[K, V], error)
+	Ping(context.Context) error
+	Close() error
 }

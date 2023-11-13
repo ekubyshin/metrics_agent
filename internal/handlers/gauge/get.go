@@ -32,9 +32,10 @@ func (m *GaugeHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if v, ok := m.db.Get(
+		r.Context(),
 		metrics.MetricsKey{
-			ID:    paramName,
-			MType: handlers.GaugeActionKey,
+			ID:   paramName,
+			Type: handlers.GaugeActionKey,
 		}); ok {
 		_, err := w.Write([]byte(strconv.FormatFloat(float64(*v.Value), 'f', -1, 64)))
 		if err == nil {
@@ -52,10 +53,11 @@ func (m *GaugeHandler) Post(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	m.db.Put(
+	err = m.db.Put(
+		r.Context(),
 		metrics.MetricsKey{
-			ID:    paramName,
-			MType: handlers.GaugeActionKey,
+			ID:   paramName,
+			Type: handlers.GaugeActionKey,
 		},
 		metrics.Metrics{
 			ID:    paramName,
@@ -63,5 +65,9 @@ func (m *GaugeHandler) Post(w http.ResponseWriter, r *http.Request) {
 			Value: &parsedValue,
 		},
 	)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 	w.WriteHeader(http.StatusOK)
 }

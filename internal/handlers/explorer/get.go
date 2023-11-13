@@ -22,8 +22,12 @@ func NewExplorerHandler(db storage.Storage[metrics.MetricsKey, metrics.Metrics])
 }
 
 func (e *ExplorerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	elems := e.db.List()
 	w.Header().Add("Content-type", "text/html")
+	elems, err := e.db.List(r.Context())
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 	if len(elems) == 0 {
 		_, _ = w.Write([]byte(`{}`))
 		return
@@ -31,10 +35,10 @@ func (e *ExplorerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	out := make(map[string]any)
 	for _, v := range elems {
 		if v.Value.Value == nil {
-			out[v.Key.MType+"_"+v.Key.ID] = v.Value.Delta
+			out[v.Key.Type+"_"+v.Key.ID] = v.Value.Delta
 			continue
 		}
-		out[v.Key.MType+"_"+v.Key.ID] = v.Value.Value
+		out[v.Key.Type+"_"+v.Key.ID] = v.Value.Value
 	}
 	res, err := json.Marshal(out)
 	if err == nil {

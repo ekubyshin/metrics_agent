@@ -18,25 +18,29 @@ type FileStorage[K any, V metrics.Keyable[K]] struct {
 	storeInterval time.Duration
 }
 
-func (s FileStorage[K, V]) Put(k K, v V) {
-	s.st.Put(k, v)
+func (s FileStorage[K, V]) Put(ctx context.Context, k K, v V) error {
+	err := s.st.Put(ctx, k, v)
+	if err != nil {
+		return err
+	}
 	if s.storeInterval == 0 {
 		go func() {
-			_ = s.flush()
+			_ = s.flush(ctx)
 		}()
 	}
+	return nil
 }
 
-func (s FileStorage[K, V]) Get(k K) (V, bool) {
-	return s.st.Get(k)
+func (s FileStorage[K, V]) Get(ctx context.Context, k K) (V, bool) {
+	return s.st.Get(ctx, k)
 }
 
-func (s FileStorage[K, V]) Delete(k K) {
-	s.st.Delete(k)
+func (s FileStorage[K, V]) Delete(ctx context.Context, k K) error {
+	return s.st.Delete(ctx, k)
 }
 
-func (s FileStorage[K, V]) List() []KeyValuer[K, V] {
-	return s.st.List()
+func (s FileStorage[K, V]) List(ctx context.Context) ([]KeyValuer[K, V], error) {
+	return s.st.List(ctx)
 }
 
 func NewFileStorage[K any, V metrics.Keyable[K]](
@@ -59,7 +63,7 @@ func NewFileStorage[K any, V metrics.Keyable[K]](
 		storeInterval: interval,
 	}
 	if restore {
-		err = fs.restore()
+		err = fs.restore(ctx)
 	}
 	if interval > 0 {
 		fs.runInterval(ctx)
@@ -67,7 +71,7 @@ func NewFileStorage[K any, V metrics.Keyable[K]](
 	return fs, err
 }
 
-func (w *FileStorage[K, V]) Ping() error {
+func (w *FileStorage[K, V]) Ping(ctx context.Context) error {
 	return nil
 }
 
@@ -80,7 +84,7 @@ func (w *FileStorage[K, V]) runInterval(ctx context.Context) {
 				return
 			default:
 				time.Sleep(w.storeInterval)
-				_ = w.flush()
+				_ = w.flush(ctx)
 			}
 		}
 	}()
@@ -90,7 +94,7 @@ func (w *FileStorage[K, V]) Close() error {
 	return w.file.Close()
 }
 
-func (w *FileStorage[K, V]) restore() error {
+func (w *FileStorage[K, V]) restore(ctx context.Context) error {
 	reader := bufio.NewReader(w.file)
 	scanner := bufio.NewScanner(reader)
 	scanner.Split(bufio.ScanLines)
@@ -104,13 +108,16 @@ func (w *FileStorage[K, V]) restore() error {
 			continue
 		}
 		key := V.Key(*m)
-		w.st.Put(key, *m)
+		err = w.st.Put(ctx, key, *m)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-func (w *FileStorage[K, V]) flush() error {
-	elems := w.st.List()
+func (w *FileStorage[K, V]) flush(ctx context.Context) error {
+	elems, _ := w.st.List(ctx)
 	if len(elems) == 0 {
 		return nil
 	}

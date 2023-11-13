@@ -1,6 +1,7 @@
 package counter
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -95,7 +96,7 @@ func TestCounterHandler_ServeHTTP(t *testing.T) {
 			assert.Equal(t, tt.want.code, res.StatusCode)
 			defer res.Body.Close()
 			if res.StatusCode == http.StatusOK {
-				v, err := st.Get(metrics.MetricsKey{ID: tt.fields.key, MType: handlers.CounterActionKey})
+				v, err := st.Get(context.TODO(), metrics.MetricsKey{ID: tt.fields.key, Type: handlers.CounterActionKey})
 				assert.True(t, err)
 				assert.Equal(t, tt.fields.value, *v.Delta)
 				assert.Equal(t, tt.want.contentType, res.Header.Get("Content-Type"))

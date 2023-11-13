@@ -2,6 +2,7 @@ package rest
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 
@@ -40,13 +41,13 @@ func (h *RestHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if ms.MType == handlers.GaugeActionKey {
-		if ok := h.putGauge(ms); !ok {
+		if ok := h.putGauge(r.Context(), ms); !ok {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 	} else {
 		var newCounterVal metrics.Counter
-		if newCounterVal, ok = h.putCounter(*ms); !ok {
+		if newCounterVal, ok = h.putCounter(r.Context(), *ms); !ok {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		} else {
@@ -73,14 +74,14 @@ func (h *RestHandler) Value(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if metrics.MType == handlers.GaugeActionKey {
-		val, ok := h.db.Get(metrics.Key())
+		val, ok := h.db.Get(r.Context(), metrics.Key())
 		if !ok {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 		metrics.Value = pointer.From[float64](float64(*val.Value))
 	} else {
-		val, ok := h.db.Get(metrics.Key())
+		val, ok := h.db.Get(r.Context(), metrics.Key())
 		if !ok {
 			w.WriteHeader(http.StatusNotFound)
 			return
@@ -96,20 +97,20 @@ func (h *RestHandler) Value(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(res)
 }
 
-func (h *RestHandler) putGauge(m *metrics.Metrics) bool {
+func (h *RestHandler) putGauge(ctx context.Context, m *metrics.Metrics) bool {
 	if m.Value == nil {
 		return false
 	}
-	h.db.Put(m.Key(), *m)
-	return true
+	err := h.db.Put(ctx, m.Key(), *m)
+	return err == nil
 }
 
-func (h *RestHandler) putCounter(m metrics.Metrics) (metrics.Counter, bool) {
+func (h *RestHandler) putCounter(ctx context.Context, m metrics.Metrics) (metrics.Counter, bool) {
 	if m.Delta == nil {
 		return 0, false
 	}
 	nv := *m.Delta
-	if v, ok := h.db.Get(m.Key()); ok {
+	if v, ok := h.db.Get(ctx, m.Key()); ok {
 		prev := int64(0)
 		if v.Delta != nil {
 			prev = *v.Delta
@@ -117,7 +118,10 @@ func (h *RestHandler) putCounter(m metrics.Metrics) (metrics.Counter, bool) {
 		nv += prev
 		m.Delta = pointer.From[int64](int64(nv))
 	}
-	h.db.Put(m.Key(), m)
+	err := h.db.Put(ctx, m.Key(), m)
+	if err != nil {
+		return 0, false
+	}
 	return metrics.Counter(nv), true
 }
 

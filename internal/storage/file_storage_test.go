@@ -33,7 +33,7 @@ func TestRestoreStorage(t *testing.T) {
 			fs, err := NewFileStorage(ctx, db, tt.args.filename, true, 0)
 			defer func() { _ = fs.Close() }()
 			assert.NoError(t, err)
-			elems := fs.List()
+			elems, _ := fs.List(context.TODO())
 			assert.Equal(t, tt.want, len(elems))
 		})
 	}

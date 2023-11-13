@@ -1,6 +1,7 @@
 package gauge
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -66,8 +67,9 @@ func TestGaugeGetHandler_ServeHTTP(t *testing.T) {
 			router.Post(PostURL, mr.Post)
 			w := httptest.NewRecorder()
 			if tt.fields.valName != "" {
-				st.Put(
-					metrics.MetricsKey{ID: tt.fields.valName, MType: handlers.GaugeActionKey},
+				_ = st.Put(
+					context.TODO(),
+					metrics.MetricsKey{ID: tt.fields.valName, Type: handlers.GaugeActionKey},
 					metrics.Metrics{ID: tt.fields.valName, MType: handlers.GaugeActionKey, Value: pointer.From[float64](float64(tt.fields.value))})
 			}
 			router.ServeHTTP(w, request)

@@ -20,7 +20,7 @@ func NewPingHandler(st storage.Storage[metrics.MetricsKey, metrics.Metrics]) *Pi
 }
 
 func (m *PingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if m.st == nil || m.st.Ping() != nil {
+	if m.st == nil || m.st.Ping(r.Context()) != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

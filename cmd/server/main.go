@@ -22,6 +22,7 @@ func main() {
 	defer cancel()
 	if cfg.DatabaseDSN != nil && *cfg.DatabaseDSN != "" {
 		st, err = storage.NewDBStorage[metrics.MetricsKey, metrics.Metrics](ctx, &cfg)
+		l.Info("use db")
 		if err != nil {
 			l.Info("db", err)
 		}
@@ -32,7 +33,9 @@ func main() {
 			if err != nil {
 				panic(err)
 			}
+			l.Info("use filestorage")
 		} else {
+			l.Info("use memstorage")
 			st = memSt
 		}
 	}
