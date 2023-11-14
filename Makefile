@@ -32,6 +32,7 @@ DB_DSN:=host=localhost user=postgres password=password dbname=metrics_agent port
 ytest: $(METRICSTEST) server agent
 	$(METRICSTEST) '-test.v' \
 	'-source-path=.' \
+	'-test.run=^TestIteration12$\' \
 	'-agent-binary-path=cmd/agent/agent' \
 	'-binary-path=cmd/server/server' \
 	'-server-port=8080' \

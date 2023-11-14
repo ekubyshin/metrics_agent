@@ -64,14 +64,10 @@ func (h *RestHandler) Updates(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 	defer cancel()
 	kv := make([]storage.KeyValuer[metrics.MetricsKey, metrics.Metrics], 0, len(ms))
 	for _, m := range ms {
-		if !m.Validate() {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
 		kv = append(kv, storage.KeyValuer[metrics.MetricsKey, metrics.Metrics]{Key: m.Key(), Value: m})
 	}
 	out, err := h.db.PutBatch(ctx, kv)
@@ -177,19 +173,19 @@ func checkContentType(r *http.Request) bool {
 
 func parseSingleMetric(r *http.Request) (*metrics.Metrics, bool) {
 	var buf bytes.Buffer
-	var metrics metrics.Metrics
+	metrics := &metrics.Metrics{}
 	defer r.Body.Close()
 	_, err := buf.ReadFrom(r.Body)
 	if err != nil {
 		return nil, false
 	}
-	if err := json.Unmarshal(buf.Bytes(), &metrics); err != nil {
+	if err := json.Unmarshal(buf.Bytes(), metrics); err != nil {
 		return nil, false
 	}
 	if metrics.MType != handlers.CounterActionKey && metrics.MType != handlers.GaugeActionKey {
-		return &metrics, false
+		return metrics, false
 	}
-	return &metrics, true
+	return metrics, true
 }
 
 func parseMetrics(r *http.Request) ([]metrics.Metrics, bool) {
