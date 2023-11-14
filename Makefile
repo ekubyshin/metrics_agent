@@ -53,3 +53,7 @@ goose-down: $(GOOSE)
 .PHONY: goose-validate
 goose-validate: $(GOOSE)
 	env GOOSE_MIGRATION_DIR=./internal/storage/migrations $(GOOSE) validate
+
+.PHONE: statictest
+statictest:
+	chmod +x $(LOCAL_BIN)/statictest && go vet -vettool=$(LOCAL_BIN)/statictest ./...

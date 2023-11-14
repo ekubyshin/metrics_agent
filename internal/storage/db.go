@@ -79,6 +79,9 @@ func (m *DBStorage[K, V]) Put(ctx context.Context, key K, val V) (*V, error) {
 	}
 	v := new(V)
 	for r.Next() {
+		if r.Err() != nil {
+			continue
+		}
 		err = r.StructScan(v)
 	}
 	return v, err
@@ -111,6 +114,9 @@ func (m *DBStorage[K, V]) PutBatch(ctx context.Context, vals []KeyValuer[K, V]) 
 			return nil, err
 		}
 		for r.Next() {
+			if r.Err() != nil {
+				continue
+			}
 			v := new(V)
 			err := r.StructScan(v)
 			if err == nil {
@@ -136,6 +142,9 @@ func (m *DBStorage[K, V]) Get(ctx context.Context, key K) (V, bool) {
 		return r, false
 	}
 	for rows.Next() {
+		if rows.Err() != nil {
+			continue
+		}
 		err := rows.StructScan(&r)
 		if err != nil {
 			return r, false
@@ -169,7 +178,10 @@ func (m *DBStorage[K, V]) List(ctx context.Context) ([]KeyValuer[K, V], error) {
 		return nil, err
 	}
 	for rows.Next() {
-		err = rows.StructScan(r)
+		if rows.Err() != nil {
+			continue
+		}
+		err := rows.StructScan(r)
 		if err != nil {
 			continue
 		}
