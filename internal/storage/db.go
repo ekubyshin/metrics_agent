@@ -165,7 +165,6 @@ func (m *DBStorage[K, V]) Delete(ctx context.Context, key K) error {
 }
 
 func (m *DBStorage[K, V]) List(ctx context.Context) ([]KeyValuer[K, V], error) {
-	var r V
 	res := make([]KeyValuer[K, V], 0)
 	rows, err := m.conn.NamedQueryContext(
 		ctx,
@@ -181,6 +180,7 @@ func (m *DBStorage[K, V]) List(ctx context.Context) ([]KeyValuer[K, V], error) {
 		if rows.Err() != nil {
 			continue
 		}
+		var r V
 		err := rows.StructScan(r)
 		if err != nil {
 			continue
