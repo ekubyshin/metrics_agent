@@ -22,8 +22,9 @@ func RegisterRoutes(
 	listHanlder := explorer.NewExplorerHandler(st)
 	restHandler := rest.NewRestHandler(st)
 	pingHandler := ping.NewPingHandler(st)
-	router.Get(listHanlder.BaseURL(), listHanlder.ServeHTTP)
-	router.Get(pingHandler.BaseURL(), pingHandler.ServeHTTP)
+	router.Get("/", listHanlder.List)
+	router.Get("/ping", pingHandler.Ping)
+	router.Get("/features", pingHandler.Features)
 	router.Post("/update/{type}/{name}/{value}", func(w http.ResponseWriter, r *http.Request) {
 		t := chi.URLParam(r, handlers.ParamTypeKey)
 		switch t {
@@ -44,4 +45,5 @@ func RegisterRoutes(
 	})
 	router.Post("/update/", restHandler.Update)
 	router.Post("/value/", restHandler.Value)
+	router.Post("/updates/", restHandler.Updates)
 }

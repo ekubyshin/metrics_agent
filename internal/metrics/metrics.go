@@ -1,6 +1,10 @@
 package metrics
 
-import "database/sql"
+import (
+	"database/sql"
+
+	"github.com/ekubyshin/metrics_agent/internal/handlers"
+)
 
 type Gauge float64
 type Counter int64
@@ -8,6 +12,7 @@ type Counter int64
 type Keyable[K any] interface {
 	Key() K
 	Serialize() map[string]any
+	Validate() bool
 }
 
 type Metrics struct {
@@ -30,10 +35,13 @@ func (m Metrics) Serialize() map[string]any {
 	r := make(map[string]any)
 	r["id"] = m.ID
 	r["type"] = m.MType
-	if m.Delta != nil {
-		r["delta"] = *m.Delta
-	} else {
-		r["delta"] = sql.NullInt64{}
+	if m.MType == handlers.GaugeActionKey {
+		if m.Delta != nil {
+			r["delta"] = *m.Delta
+		} else {
+			r["delta"] = sql.NullInt64{}
+		}
+		return r
 	}
 	if m.Value != nil {
 		r["value"] = *m.Value
@@ -41,4 +49,12 @@ func (m Metrics) Serialize() map[string]any {
 		r["value"] = sql.NullFloat64{}
 	}
 	return r
+}
+
+func (m Metrics) Validate() bool {
+	if m.MType == handlers.GaugeActionKey && m.Value != nil ||
+		m.MType == handlers.CounterActionKey && m.Delta != nil {
+		return true
+	}
+	return false
 }

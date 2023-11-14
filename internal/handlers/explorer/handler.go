@@ -1,29 +1,30 @@
 package explorer
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
-	"github.com/ekubyshin/metrics_agent/internal/handlers"
 	"github.com/ekubyshin/metrics_agent/internal/metrics"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
 )
 
 type ExplorerHandler struct {
-	route string
-	db    storage.Storage[metrics.MetricsKey, metrics.Metrics]
+	db storage.Storage[metrics.MetricsKey, metrics.Metrics]
 }
 
-func NewExplorerHandler(db storage.Storage[metrics.MetricsKey, metrics.Metrics]) handlers.Handler {
+func NewExplorerHandler(db storage.Storage[metrics.MetricsKey, metrics.Metrics]) *ExplorerHandler {
 	return &ExplorerHandler{
-		route: "/",
-		db:    db,
+		db: db,
 	}
 }
 
-func (e *ExplorerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (e *ExplorerHandler) List(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-type", "text/html")
-	elems, err := e.db.List(r.Context())
+	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+	defer cancel()
+	elems, err := e.db.List(ctx)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -48,8 +49,4 @@ func (e *ExplorerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	w.WriteHeader(http.StatusServiceUnavailable)
-}
-
-func (e *ExplorerHandler) BaseURL() string {
-	return e.route
 }

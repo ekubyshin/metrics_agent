@@ -61,14 +61,17 @@ func TestAgentWriter_WriteBatch(t *testing.T) {
 			resp, _ := httpmock.NewJsonResponder(200, metrics.Metrics{})
 			httpmock.RegisterResponder(
 				"POST",
-				fmt.Sprintf("http://%v/update/", endPoint),
+				fmt.Sprintf("http://%s/update/", endPoint),
+				resp,
+			)
+			httpmock.RegisterResponder(
+				"POST",
+				fmt.Sprintf("http://%s/updates/", endPoint),
 				resp,
 			)
 			r := NewAgentReporter(client, endPoint)
-			errs := r.WriteBatch(tt.args.data)
-			assert.Len(t, errs, 0)
-			total := httpmock.GetTotalCallCount()
-			assert.Equal(t, len(tt.args.data), total)
+			err := r.WriteBatch(tt.args.data)
+			assert.NoError(t, err)
 		})
 	}
 }

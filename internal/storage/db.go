@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"embed"
-	"time"
 
 	"github.com/ekubyshin/metrics_agent/internal/config"
 	"github.com/ekubyshin/metrics_agent/internal/metrics"
@@ -14,8 +13,6 @@ import (
 
 //go:embed migrations/*.sql
 var embedMigrations embed.FS
-
-const timeout = 3 * time.Second
 
 type DBStorage[K any, V metrics.Keyable[K]] struct {
 	conn sqlx.DB
@@ -63,33 +60,73 @@ func (m *DBStorage[K, V]) Close() error {
 	return m.conn.Close()
 }
 
-func (m *DBStorage[K, V]) Put(ctx context.Context, key K, val V) error {
-	c, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-	_, err := m.conn.NamedExecContext(
-		c,
+func (m *DBStorage[K, V]) Put(ctx context.Context, key K, val V) (*V, error) {
+	r, err := m.conn.NamedQueryContext(
+		ctx,
 		`
 			INSERT INTO metrics(id, type, delta, value)
 			VALUES (:id, :type, :delta, :value)
 			ON CONFLICT (id, type) DO
 			UPDATE 
-				SET delta = EXCLUDED.delta,
-					value = EXCLUDED.value;
+				SET delta = metrics.delta + EXCLUDED.delta,
+					value = EXCLUDED.value
+			RETURNING metrics.id, metrics.type, metrics.delta, metrics.value;
 		`,
-		val.Serialize(),
+		val,
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	v := new(V)
+	for r.Next() {
+		err = r.StructScan(v)
+	}
+	return v, err
+}
+
+func (m *DBStorage[K, V]) PutBatch(ctx context.Context, vals []KeyValuer[K, V]) ([]V, error) {
+	tx, err := m.conn.Beginx()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback() //nolint
+
+	out := make([]V, 0, len(vals))
+	for _, v := range vals {
+		r, err := sqlx.NamedQueryContext(
+			ctx,
+			tx,
+			`
+				INSERT INTO metrics(id, type, delta, value)
+				VALUES (:id, :type, :delta, :value)
+				ON CONFLICT (id, type) DO
+				UPDATE 
+					SET delta = metrics.delta + EXCLUDED.delta,
+						value = EXCLUDED.value
+				RETURNING metrics.id, metrics.type, metrics.delta, metrics.value;
+			`,
+			v.Value,
+		)
+		if err != nil {
+			return nil, err
+		}
+		for r.Next() {
+			v := new(V)
+			err := r.StructScan(v)
+			if err == nil {
+				out = append(out, *v)
+			}
+		}
+
+	}
+	err = tx.Commit()
+	return out, err
 }
 
 func (m *DBStorage[K, V]) Get(ctx context.Context, key K) (V, bool) {
-	c, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
 	var r V
 	rows, err := m.conn.NamedQueryContext(
-		c,
+		ctx,
 		`
 			SELECT * FROM metrics WHERE id=:id AND type=:type;
 		`,
@@ -108,10 +145,8 @@ func (m *DBStorage[K, V]) Get(ctx context.Context, key K) (V, bool) {
 }
 
 func (m *DBStorage[K, V]) Delete(ctx context.Context, key K) error {
-	c, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
 	_, err := m.conn.NamedExecContext(
-		c,
+		ctx,
 		`
 			DELETE FROM metrics WHERE id=:id AND type=:type
 		`,
@@ -121,12 +156,10 @@ func (m *DBStorage[K, V]) Delete(ctx context.Context, key K) error {
 }
 
 func (m *DBStorage[K, V]) List(ctx context.Context) ([]KeyValuer[K, V], error) {
-	c, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
 	var r V
 	res := make([]KeyValuer[K, V], 0)
 	rows, err := m.conn.NamedQueryContext(
-		c,
+		ctx,
 		`
 			SELECT * FROM metrics;
 		`,

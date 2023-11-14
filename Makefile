@@ -25,13 +25,12 @@ test:
 .PHONY: lint
 lint: $(GOLANGCI_BIN) ## go lint
 	$(GOLANGCI_BIN) run --fix ./...
-## '-test.run=^TestIteration7$\'
+## '-test.run=^TestIteration11$\' \
 
 DB_DSN:=host=localhost user=postgres password=password dbname=metrics_agent port=5432 sslmode=disable
 .PHONY: ytest
 ytest: $(METRICSTEST) server agent
 	$(METRICSTEST) '-test.v' \
-	'-test.run=^TestIteration11$\' \
 	'-source-path=.' \
 	'-agent-binary-path=cmd/agent/agent' \
 	'-binary-path=cmd/server/server' \

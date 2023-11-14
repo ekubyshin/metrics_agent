@@ -31,7 +31,7 @@ func Test_gzipReader(t *testing.T) {
 	request.Header.Add("Content-Type", "application/json")
 	router := chi.NewMux()
 	st := storage.NewMemoryStorage[metrics.MetricsKey, metrics.Metrics]()
-	_ = st.Put(
+	_, _ = st.Put(
 		context.TODO(),
 		metrics.MetricsKey{ID: "test", Type: handlers.GaugeActionKey},
 		metrics.Metrics{ID: "test", MType: handlers.GaugeActionKey, Value: pointer.From[float64](1.0)})
@@ -57,7 +57,7 @@ func Test_gzipWriter(t *testing.T) {
 	request.Header.Add("Content-Type", "application/json")
 	router := chi.NewMux()
 	st := storage.NewMemoryStorage[metrics.MetricsKey, metrics.Metrics]()
-	_ = st.Put(
+	_, _ = st.Put(
 		context.TODO(),
 		metrics.MetricsKey{ID: "test", Type: handlers.GaugeActionKey},
 		metrics.Metrics{ID: "test", MType: handlers.GaugeActionKey, Value: pointer.From[float64](1.0)})

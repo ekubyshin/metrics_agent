@@ -1,8 +1,10 @@
 package gauge
 
 import (
+	"context"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/ekubyshin/metrics_agent/internal/handlers"
 	"github.com/ekubyshin/metrics_agent/internal/metrics"
@@ -31,8 +33,10 @@ func (m *GaugeHandler) Get(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+	defer cancel()
 	if v, ok := m.db.Get(
-		r.Context(),
+		ctx,
 		metrics.MetricsKey{
 			ID:   paramName,
 			Type: handlers.GaugeActionKey,
@@ -53,8 +57,10 @@ func (m *GaugeHandler) Post(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	err = m.db.Put(
-		r.Context(),
+	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+	defer cancel()
+	_, err = m.db.Put(
+		ctx,
 		metrics.MetricsKey{
 			ID:   paramName,
 			Type: handlers.GaugeActionKey,

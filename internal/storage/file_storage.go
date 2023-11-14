@@ -18,17 +18,26 @@ type FileStorage[K any, V metrics.Keyable[K]] struct {
 	storeInterval time.Duration
 }
 
-func (s FileStorage[K, V]) Put(ctx context.Context, k K, v V) error {
-	err := s.st.Put(ctx, k, v)
+func (s FileStorage[K, V]) Put(ctx context.Context, k K, v V) (*V, error) {
+	_, err := s.st.Put(ctx, k, v)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if s.storeInterval == 0 {
 		go func() {
 			_ = s.flush(ctx)
 		}()
 	}
-	return nil
+	return nil, nil
+}
+
+func (s FileStorage[K, V]) PutBatch(ctx context.Context, vals []KeyValuer[K, V]) ([]V, error) {
+	for _, v := range vals {
+		if _, err := s.Put(ctx, v.Key, v.Value); err != nil {
+			return nil, err
+		}
+	}
+	return nil, nil
 }
 
 func (s FileStorage[K, V]) Get(ctx context.Context, k K) (V, bool) {
@@ -108,7 +117,7 @@ func (w *FileStorage[K, V]) restore(ctx context.Context) error {
 			continue
 		}
 		key := V.Key(*m)
-		err = w.st.Put(ctx, key, *m)
+		_, err = w.st.Put(ctx, key, *m)
 		if err != nil {
 			return err
 		}

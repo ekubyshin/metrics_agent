@@ -15,9 +15,18 @@ func NewMemoryStorage[K any, V any]() *MemStorage[K, V] {
 	}
 }
 
-func (m *MemStorage[K, V]) Put(ctx context.Context, key K, val V) error {
+func (m *MemStorage[K, V]) Put(ctx context.Context, key K, val V) (*V, error) {
 	m.data.Swap(key, val)
-	return nil
+	return nil, nil
+}
+
+func (m *MemStorage[K, V]) PutBatch(ctx context.Context, vals []KeyValuer[K, V]) ([]V, error) {
+	for _, v := range vals {
+		if _, err := m.Put(ctx, v.Key, v.Value); err != nil {
+			return nil, err
+		}
+	}
+	return nil, nil
 }
 
 func (m *MemStorage[K, V]) Get(ctx context.Context, key K) (V, bool) {

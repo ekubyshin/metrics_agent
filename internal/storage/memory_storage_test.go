@@ -11,7 +11,7 @@ func TestMemoryStorage_PutGetListDeleteSimple(t *testing.T) {
 	st := NewMemoryStorage[int, int]()
 	ctx := context.TODO()
 	for i := 0; i < 3; i++ {
-		_ = st.Put(ctx, i, i+1)
+		_, _ = st.Put(ctx, i, i+1)
 		v1, ok := st.Get(ctx, i)
 		assert.Equal(t, true, ok)
 		assert.Equal(t, i+1, v1)
@@ -43,7 +43,7 @@ func TestMemoryStorage_PutGetListDeleteStruct(t *testing.T) {
 	st := NewMemoryStorage[KV, int]()
 	ctx := context.TODO()
 	for i := 0; i < 3; i++ {
-		_ = st.Put(ctx, KV{i, i}, i)
+		_, _ = st.Put(ctx, KV{i, i}, i)
 		v, ok := st.Get(ctx, KV{i, i})
 		assert.Equal(t, true, ok)
 		assert.Equal(t, i, v)

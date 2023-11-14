@@ -96,7 +96,7 @@ func TestExplorerHandler_ServeHTTP(t *testing.T) {
 			for _, v := range tt.args {
 				if v.Type == handlers.GaugeActionKey {
 					if val, ok := v.Value.(metrics.Gauge); ok {
-						_ = st.Put(
+						_, _ = st.Put(
 							context.TODO(),
 							metrics.MetricsKey{ID: v.Name, Type: v.Type},
 							metrics.Metrics{ID: v.Name, MType: v.Type, Value: pointer.From[float64](float64(val))},
@@ -104,7 +104,7 @@ func TestExplorerHandler_ServeHTTP(t *testing.T) {
 					}
 				} else {
 					if val, ok := v.Value.(metrics.Counter); ok {
-						_ = st.Put(
+						_, _ = st.Put(
 							context.TODO(),
 							metrics.MetricsKey{ID: v.Name, Type: v.Type},
 							metrics.Metrics{ID: v.Name, MType: v.Type, Delta: pointer.From[int64](int64(val))},
@@ -112,7 +112,7 @@ func TestExplorerHandler_ServeHTTP(t *testing.T) {
 					}
 				}
 			}
-			router.Get("/", mr.ServeHTTP)
+			router.Get("/", mr.List)
 			router.ServeHTTP(w, request)
 			res := w.Result()
 			assert.Equal(t, tt.want.code, res.StatusCode)

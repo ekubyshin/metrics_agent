@@ -67,7 +67,7 @@ func TestGaugeGetHandler_ServeHTTP(t *testing.T) {
 			router.Post(PostURL, mr.Post)
 			w := httptest.NewRecorder()
 			if tt.fields.valName != "" {
-				_ = st.Put(
+				_, _ = st.Put(
 					context.TODO(),
 					metrics.MetricsKey{ID: tt.fields.valName, Type: handlers.GaugeActionKey},
 					metrics.Metrics{ID: tt.fields.valName, MType: handlers.GaugeActionKey, Value: pointer.From[float64](float64(tt.fields.value))})
@@ -82,6 +82,67 @@ func TestGaugeGetHandler_ServeHTTP(t *testing.T) {
 				assert.Equal(t, tt.want.response, string(resBody))
 				assert.Equal(t, tt.want.contentType, res.Header.Get("Content-Type"))
 			}
+		})
+	}
+}
+
+// nolint
+func TestGaugeHandler_ServeHTTP(t *testing.T) {
+	type fields struct {
+		route  string
+		method string
+		value  metrics.Gauge
+		key    string
+	}
+	type want struct {
+		code        int
+		response    string
+		contentType string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   want
+	}{
+		{
+			"test 404",
+			fields{
+				route:  "/gauge/someCounter/a",
+				method: "POST",
+			},
+			want{
+				code:        http.StatusBadRequest,
+				contentType: "",
+				response:    ``,
+			},
+		},
+		{
+			"test 200",
+			fields{
+				route:  "/gauge/testSetGet185/117067.144",
+				method: "POST",
+				value:  117067.144,
+				key:    "testSetGet185",
+			},
+			want{
+				code:        http.StatusOK,
+				contentType: "text/plain",
+				response:    `117067.144`,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			request := httptest.NewRequest(tt.fields.method, tt.fields.route, nil)
+			router := chi.NewMux()
+			st := storage.NewMemoryStorage[metrics.MetricsKey, metrics.Metrics]()
+			m := NewGaugeHandler(st)
+			w := httptest.NewRecorder()
+			router.Post(PostURL, m.Post)
+			router.ServeHTTP(w, request)
+			res := w.Result()
+			assert.Equal(t, tt.want.code, res.StatusCode)
+			defer res.Body.Close()
 		})
 	}
 }
