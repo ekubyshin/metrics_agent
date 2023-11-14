@@ -180,12 +180,12 @@ func (m *DBStorage[K, V]) List(ctx context.Context) ([]KeyValuer[K, V], error) {
 		if rows.Err() != nil {
 			continue
 		}
-		var r V
+		r := new(V)
 		err := rows.StructScan(r)
 		if err != nil {
 			continue
 		}
-		res = append(res, KeyValuer[K, V]{Key: r.Key(), Value: r})
+		res = append(res, KeyValuer[K, V]{Key: (*r).Key(), Value: *r})
 	}
 	return res, err
 }
