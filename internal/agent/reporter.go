@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"syscall"
 	"time"
 
 	"github.com/ekubyshin/metrics_agent/internal/metrics"
@@ -78,8 +80,7 @@ func (r *AgentWriter) WriteBatch(data []metrics.Metrics) error {
 
 func (r *AgentWriter) send(req *resty.Request, i int64) error {
 	_, err := req.Post(fmt.Sprintf("http://%s/updates/", r.endpoint))
-
-	if err != nil && i <= 5 {
+	if err != nil && errors.Is(err, syscall.ECONNREFUSED) && i <= 5 {
 		time.Sleep(time.Duration(i) * time.Second)
 		return r.send(req, i+2)
 	}
