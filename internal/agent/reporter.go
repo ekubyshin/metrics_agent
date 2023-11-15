@@ -36,7 +36,7 @@ type AgentWriter struct {
 func NewAgentReporter(client *resty.Client, endpoint string) *AgentWriter {
 	client.Header.Add("Content-Type", "application/json")
 	client.Header.Add("Accept", "application/json")
-	client.SetTimeout(500 * time.Millisecond)
+	client.SetTimeout(1 * time.Second)
 	return &AgentWriter{
 		client:   client,
 		endpoint: endpoint,

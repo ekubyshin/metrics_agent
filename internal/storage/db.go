@@ -64,13 +64,13 @@ func (m *DBStorage[K, V]) Put(ctx context.Context, key K, val V) (*V, error) {
 	r, err := m.conn.NamedQueryContext(
 		ctx,
 		`
-			INSERT INTO metrics(id, type, delta, value)
-			VALUES (:id, :type, :delta, :value)
-			ON CONFLICT (id, type) DO
-			UPDATE 
-				SET delta = metrics.delta + EXCLUDED.delta,
-					value = EXCLUDED.value
-			RETURNING metrics.id, metrics.type, metrics.delta, metrics.value;
+		INSERT INTO metrics(id, type, delta, value)
+		VALUES (:id, :type, :delta, :value)
+		ON CONFLICT (id, type) DO
+		UPDATE 
+			SET delta = EXCLUDED.delta,
+				value = EXCLUDED.value
+		RETURNING metrics.id, metrics.type, metrics.delta, metrics.value;
 		`,
 		val,
 	)
