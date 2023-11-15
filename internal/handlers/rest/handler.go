@@ -99,14 +99,14 @@ func (h *RestHandler) Value(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	if metrics.MType == handlers.GaugeActionKey {
 		val, ok := h.db.Get(ctx, metrics.Key())
-		if !ok {
+		if !ok || val.Value == nil {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 		metrics.Value = pointer.From[float64](float64(*val.Value))
 	} else {
 		val, ok := h.db.Get(ctx, metrics.Key())
-		if !ok {
+		if !ok || val.Delta == nil {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
@@ -190,7 +190,7 @@ func parseSingleMetric(r *http.Request) (*metrics.Metrics, bool) {
 
 func parseMetrics(r *http.Request) ([]metrics.Metrics, bool) {
 	var buf bytes.Buffer
-	var elems batchMetrics
+	var elems []metrics.Metrics
 	defer r.Body.Close()
 	_, err := buf.ReadFrom(r.Body)
 	if err != nil {
@@ -199,5 +199,5 @@ func parseMetrics(r *http.Request) ([]metrics.Metrics, bool) {
 	if err := json.Unmarshal(buf.Bytes(), &elems); err != nil {
 		return nil, false
 	}
-	return elems.Metrics, true
+	return elems, true
 }

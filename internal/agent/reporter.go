@@ -60,7 +60,7 @@ func Compress(data []byte) ([]byte, error) {
 }
 
 func (r *AgentWriter) WriteBatch(data []metrics.Metrics) error {
-	bSend, err := json.Marshal(map[string]any{"Metrics": data})
+	bSend, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
