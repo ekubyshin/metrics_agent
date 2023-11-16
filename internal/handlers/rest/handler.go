@@ -157,12 +157,14 @@ func (h *RestHandler) putMetric(ctx context.Context, m *metrics.Metrics) (*metri
 		if ok := h.putGauge(ctx, m); !ok {
 			return m, false
 		}
+		return m, true
 	}
-	if newCounterVal, ok := h.putCounter(ctx, m); !ok {
+	var newCounterVal metrics.Counter
+	var ok bool
+	if newCounterVal, ok = h.putCounter(ctx, m); !ok {
 		return m, false
-	} else {
-		m.Delta = pointer.From[int64](int64(newCounterVal))
 	}
+	m.Delta = pointer.From[int64](int64(newCounterVal))
 	return m, true
 }
 
