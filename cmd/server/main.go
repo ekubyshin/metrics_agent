@@ -17,27 +17,11 @@ func main() {
 		panic(err)
 	}
 	defer l.Sync() //nolint
-	var st storage.Storage[metrics.MetricsKey, metrics.Metrics]
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	if cfg.DatabaseDSN != nil && *cfg.DatabaseDSN != "" {
-		st, err = storage.NewDBStorage[metrics.MetricsKey, metrics.Metrics](ctx, &cfg)
-		l.Info("use db")
-		if err != nil {
-			l.Info("db", err)
-		}
-	} else {
-		memSt := storage.NewMemoryStorage[metrics.MetricsKey, metrics.Metrics]()
-		if cfg.FileStoragePath != nil && *cfg.FileStoragePath != "" {
-			st, err = storage.NewFileStorage(ctx, memSt, *cfg.FileStoragePath, *cfg.Restore, cfg.StoreDuration())
-			if err != nil {
-				panic(err)
-			}
-			l.Info("use filestorage")
-		} else {
-			l.Info("use memstorage")
-			st = memSt
-		}
+	st, err := storage.AutoLoadStorage[metrics.MetricsKey, metrics.Metrics](ctx, cfg)
+	if err != nil {
+		panic(err)
 	}
 	srv := server.NewServer(cfg, l, st)
 	err = srv.Run()

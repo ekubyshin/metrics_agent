@@ -36,7 +36,7 @@ func (m *CounterHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 	defer cancel()
-	if v, ok := m.db.Get(ctx, metrics.MetricsKey{ID: paramName, Type: handlers.CounterActionKey}); ok {
+	if v, ok := m.db.Get(ctx, metrics.MetricsKey{ID: paramName, Type: handlers.CounterActionKey}); ok && v.Delta != nil {
 		_, err := w.Write([]byte(strconv.FormatInt(*v.Delta, 10)))
 		if err == nil {
 			return
@@ -60,31 +60,23 @@ func (m *CounterHandler) Post(w http.ResponseWriter, r *http.Request) {
 	key := metrics.MetricsKey{ID: paramName, Type: handlers.CounterActionKey}
 	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 	defer cancel()
-	if v, ok := m.db.Get(ctx, key); ok {
+	var v metrics.Metrics
+	ok := false
+	if v, ok = m.db.Get(ctx, key); ok {
 		prev := int64(0)
 		if v.Delta != nil {
 			prev = *v.Delta
 		}
 		v.Delta = pointer.From[int64](prev + parsedValue)
-		_, err := m.db.Put(ctx, key, v)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
 	} else {
-		_, err := m.db.Put(
-			ctx,
-			key,
-			metrics.Metrics{
-				ID:    paramName,
-				MType: handlers.CounterActionKey,
-				Delta: pointer.From[int64](parsedValue),
-			},
-		)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+		v.ID = paramName
+		v.MType = handlers.CounterActionKey
+		v.Delta = pointer.From[int64](parsedValue)
+	}
+	_, err = m.db.Put(ctx, key, v)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 	w.WriteHeader(http.StatusOK)
 }
