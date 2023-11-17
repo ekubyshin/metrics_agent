@@ -1,6 +1,7 @@
 package explorer
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -95,15 +96,23 @@ func TestExplorerHandler_ServeHTTP(t *testing.T) {
 			for _, v := range tt.args {
 				if v.Type == handlers.GaugeActionKey {
 					if val, ok := v.Value.(metrics.Gauge); ok {
-						st.Put(metrics.MetricsKey{ID: v.Name, MType: v.Type}, metrics.Metrics{ID: v.Name, MType: v.Type, Value: pointer.From[float64](float64(val))})
+						_, _ = st.Put(
+							context.TODO(),
+							metrics.MetricsKey{ID: v.Name, Type: v.Type},
+							metrics.Metrics{ID: v.Name, MType: v.Type, Value: pointer.From[float64](float64(val))},
+						)
 					}
 				} else {
 					if val, ok := v.Value.(metrics.Counter); ok {
-						st.Put(metrics.MetricsKey{ID: v.Name, MType: v.Type}, metrics.Metrics{ID: v.Name, MType: v.Type, Delta: pointer.From[int64](int64(val))})
+						_, _ = st.Put(
+							context.TODO(),
+							metrics.MetricsKey{ID: v.Name, Type: v.Type},
+							metrics.Metrics{ID: v.Name, MType: v.Type, Delta: pointer.From[int64](int64(val))},
+						)
 					}
 				}
 			}
-			router.Get("/", mr.ServeHTTP)
+			router.Get("/", mr.List)
 			router.ServeHTTP(w, request)
 			res := w.Result()
 			assert.Equal(t, tt.want.code, res.StatusCode)

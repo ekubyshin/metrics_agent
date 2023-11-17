@@ -32,6 +32,7 @@ type Config struct {
 	FileStoragePath *string `env:"FILE_STORAGE_PATH"`
 	Restore         *bool   `env:"RESTORE"`
 	Env             string  `env:"Env"`
+	DatabaseDSN     *string `env:"DATABASE_DSN"`
 }
 
 func (c Config) ReportDuration() time.Duration {
@@ -99,6 +100,11 @@ func (b Builder) WithStoreFilePath(p string) Builder {
 
 func (b Builder) WithRestore(r bool) Builder {
 	b.config.Restore = &r
+	return b
+}
+
+func (b Builder) WithPostgres(dsn string) Builder {
+	b.config.DatabaseDSN = &dsn
 	return b
 }
 
@@ -176,6 +182,7 @@ func NewServerConfigFromFlags() Config {
 	storeInterval := flag.Int("i", defaultStoreInterval, "store interval")
 	fileStorage := flag.String("f", defaultPath, "store db file path")
 	restore := flag.Bool("r", shouldRestore, "should restore db")
+	dsn := flag.String("d", "", "postgres dsn")
 	flag.Parse()
 	builer := NewBuilder()
 	address := &Address{}
@@ -185,6 +192,7 @@ func NewServerConfigFromFlags() Config {
 		WithStoreInterval(*storeInterval).
 		WithStoreFilePath(*fileStorage).
 		WithRestore(*restore).
+		WithPostgres(*dsn).
 		Build()
 }
 

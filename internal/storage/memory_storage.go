@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"sync"
 )
 
@@ -14,11 +15,21 @@ func NewMemoryStorage[K any, V any]() *MemStorage[K, V] {
 	}
 }
 
-func (m *MemStorage[K, V]) Put(key K, val V) {
+func (m *MemStorage[K, V]) Put(ctx context.Context, key K, val V) (*V, error) {
 	m.data.Swap(key, val)
+	return nil, nil
 }
 
-func (m *MemStorage[K, V]) Get(key K) (V, bool) {
+func (m *MemStorage[K, V]) PutBatch(ctx context.Context, vals []KeyValuer[K, V]) ([]V, error) {
+	for _, v := range vals {
+		if _, err := m.Put(ctx, v.Key, v.Value); err != nil {
+			return nil, err
+		}
+	}
+	return nil, nil
+}
+
+func (m *MemStorage[K, V]) Get(ctx context.Context, key K) (V, bool) {
 	var res V
 	if val, ok := m.data.Load(key); ok {
 		if castVal, ok := val.(V); ok {
@@ -29,11 +40,20 @@ func (m *MemStorage[K, V]) Get(key K) (V, bool) {
 	return res, false
 }
 
-func (m *MemStorage[K, V]) Delete(key K) {
+func (m *MemStorage[K, V]) Delete(ctx context.Context, key K) error {
 	m.data.Delete(key)
+	return nil
 }
 
-func (m *MemStorage[K, V]) List() []KeyValuer[K, V] {
+func (m *MemStorage[K, V]) Ping(ctx context.Context) error {
+	return nil
+}
+
+func (m *MemStorage[K, V]) Close() error {
+	return nil
+}
+
+func (m *MemStorage[K, V]) List(ctx context.Context) ([]KeyValuer[K, V], error) {
 	arr := make([]KeyValuer[K, V], 0, 100)
 	m.data.Range(func(key, value any) bool {
 		if key == nil || key == "" || value == nil {
@@ -46,5 +66,5 @@ func (m *MemStorage[K, V]) List() []KeyValuer[K, V] {
 		}
 		return true
 	})
-	return arr
+	return arr, nil
 }

@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http/httptest"
@@ -30,15 +31,16 @@ func Test_gzipReader(t *testing.T) {
 	request.Header.Add("Content-Type", "application/json")
 	router := chi.NewMux()
 	st := storage.NewMemoryStorage[metrics.MetricsKey, metrics.Metrics]()
-	st.Put(
-		metrics.MetricsKey{ID: "test", MType: handlers.GaugeActionKey},
+	_, _ = st.Put(
+		context.TODO(),
+		metrics.MetricsKey{ID: "test", Type: handlers.GaugeActionKey},
 		metrics.Metrics{ID: "test", MType: handlers.GaugeActionKey, Value: pointer.From[float64](1.0)})
 	w := httptest.NewRecorder()
 	m := rest.NewRestHandler(st)
 	router.Use(GzipReader)
 	router.Post("/update/", m.Update)
 	router.ServeHTTP(w, request)
-	val, ok := st.Get(metrics.MetricsKey{ID: "test", MType: handlers.GaugeActionKey})
+	val, ok := st.Get(context.TODO(), metrics.MetricsKey{ID: "test", Type: handlers.GaugeActionKey})
 	assert.True(t, ok)
 	assert.Equal(t, metrics.Metrics{ID: "test", MType: handlers.GaugeActionKey, Value: pointer.From[float64](1.0)}, val)
 	res := w.Result()
@@ -55,15 +57,16 @@ func Test_gzipWriter(t *testing.T) {
 	request.Header.Add("Content-Type", "application/json")
 	router := chi.NewMux()
 	st := storage.NewMemoryStorage[metrics.MetricsKey, metrics.Metrics]()
-	st.Put(
-		metrics.MetricsKey{ID: "test", MType: handlers.GaugeActionKey},
+	_, _ = st.Put(
+		context.TODO(),
+		metrics.MetricsKey{ID: "test", Type: handlers.GaugeActionKey},
 		metrics.Metrics{ID: "test", MType: handlers.GaugeActionKey, Value: pointer.From[float64](1.0)})
 	w := httptest.NewRecorder()
 	m := rest.NewRestHandler(st)
 	router.Use(GzipHandler)
 	router.Post("/value/", m.Value)
 	router.ServeHTTP(w, request)
-	val, ok := st.Get(metrics.MetricsKey{ID: "test", MType: handlers.GaugeActionKey})
+	val, ok := st.Get(context.TODO(), metrics.MetricsKey{ID: "test", Type: handlers.GaugeActionKey})
 	assert.True(t, ok)
 	assert.Equal(t, metrics.Metrics{ID: "test", MType: handlers.GaugeActionKey, Value: pointer.From[float64](1.0)}, val)
 	res := w.Result()

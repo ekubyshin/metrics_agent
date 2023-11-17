@@ -76,7 +76,7 @@ func (a *MetricsAgent) report() {
 		case st := <-a.queue:
 			count++
 			if count <= int(a.batchSize) {
-				a.reporter.WriteBatch(convertSystemInfoToMetric(st))
+				_ = a.reporter.WriteBatch(convertSystemInfoToMetric(st))
 			} else {
 				count = 0
 				time.Sleep(a.reportInterval)

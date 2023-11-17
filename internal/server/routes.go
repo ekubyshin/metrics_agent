@@ -7,6 +7,7 @@ import (
 	"github.com/ekubyshin/metrics_agent/internal/handlers/counter"
 	"github.com/ekubyshin/metrics_agent/internal/handlers/explorer"
 	"github.com/ekubyshin/metrics_agent/internal/handlers/gauge"
+	"github.com/ekubyshin/metrics_agent/internal/handlers/ping"
 	"github.com/ekubyshin/metrics_agent/internal/handlers/rest"
 	"github.com/ekubyshin/metrics_agent/internal/metrics"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
@@ -15,21 +16,22 @@ import (
 
 func RegisterRoutes(
 	router *chi.Mux,
-	db storage.Storage[metrics.MetricsKey, metrics.Metrics]) {
-	gaugePostHandler := gauge.NewGaugePostHandler(db)
-	counterPostHandler := counter.NewCounterPostHandler(db)
-	gaugeGetHandler := gauge.NewGaugeGetHandler(db)
-	counterGetHanlder := counter.NewCounterGetHandler(db)
-	listHanlder := explorer.NewExplorerHandler(db)
-	restHandler := rest.NewRestHandler(db)
-	router.Get(listHanlder.BaseURL(), listHanlder.ServeHTTP)
+	st storage.Storage[metrics.MetricsKey, metrics.Metrics]) {
+	counterHandler := counter.NewCounterHandler(st)
+	gaugeHandler := gauge.NewGaugeHandler(st)
+	listHanlder := explorer.NewExplorerHandler(st)
+	restHandler := rest.NewRestHandler(st)
+	pingHandler := ping.NewPingHandler(st)
+	router.Get("/", listHanlder.List)
+	router.Get("/ping", pingHandler.Ping)
+	router.Get("/features", pingHandler.Features)
 	router.Post("/update/{type}/{name}/{value}", func(w http.ResponseWriter, r *http.Request) {
 		t := chi.URLParam(r, handlers.ParamTypeKey)
 		switch t {
 		case handlers.GaugeActionKey:
-			gaugePostHandler.ServeHTTP(w, r)
+			gaugeHandler.Post(w, r)
 		case handlers.CounterActionKey:
-			counterPostHandler.ServeHTTP(w, r)
+			counterHandler.Post(w, r)
 		default:
 			w.WriteHeader(http.StatusNotImplemented)
 		}
@@ -38,9 +40,10 @@ func RegisterRoutes(
 		w.WriteHeader(GetErrorStatusCode(r))
 	})
 	router.Route("/value", func(r chi.Router) {
-		r.Get(gaugeGetHandler.BaseURL(), gaugeGetHandler.ServeHTTP)
-		r.Get(counterGetHanlder.BaseURL(), counterGetHanlder.ServeHTTP)
+		r.Get("/gauge/{name}", gaugeHandler.Get)
+		r.Get("/counter/{name}", counterHandler.Get)
 	})
 	router.Post("/update/", restHandler.Update)
 	router.Post("/value/", restHandler.Value)
+	router.Post("/updates/", restHandler.Updates)
 }

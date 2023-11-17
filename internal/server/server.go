@@ -21,26 +21,17 @@ type ChiServer struct {
 	endpoint config.Address
 }
 
-func NewServer(cfg config.Config, logger l.Logger) *ChiServer {
-	db := storage.NewMemoryStorage[metrics.MetricsKey, metrics.Metrics]()
-	var w *storage.FileStorage[metrics.MetricsKey, metrics.Metrics]
-	var err error
-	if cfg.FileStoragePath != nil && *cfg.FileStoragePath != "" {
-		w, err = storage.NewFileStorage(db, *cfg.FileStoragePath, *cfg.Restore, cfg.StoreDuration())
-		if err != nil {
-			panic(err)
-		}
-	}
+func NewServer(
+	cfg config.Config,
+	logger l.Logger,
+	st storage.Storage[metrics.MetricsKey, metrics.Metrics],
+) *ChiServer {
 	router := chi.NewRouter()
 	router.Use(mw.NewRequestLogger(logger))
 	router.Use(mw.NewResponseLogger(logger))
 	router.Use(mw.GzipReader)
 	router.Use(mw.GzipHandler)
-	if w != nil {
-		RegisterRoutes(router, w)
-	} else {
-		RegisterRoutes(router, db)
-	}
+	RegisterRoutes(router, st)
 
 	return &ChiServer{
 		router:   router,

@@ -1,29 +1,34 @@
 package explorer
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
-	"github.com/ekubyshin/metrics_agent/internal/handlers"
 	"github.com/ekubyshin/metrics_agent/internal/metrics"
 	"github.com/ekubyshin/metrics_agent/internal/storage"
 )
 
 type ExplorerHandler struct {
-	route string
-	db    storage.Storage[metrics.MetricsKey, metrics.Metrics]
+	db storage.Storage[metrics.MetricsKey, metrics.Metrics]
 }
 
-func NewExplorerHandler(db storage.Storage[metrics.MetricsKey, metrics.Metrics]) handlers.Handler {
+func NewExplorerHandler(db storage.Storage[metrics.MetricsKey, metrics.Metrics]) *ExplorerHandler {
 	return &ExplorerHandler{
-		route: "/",
-		db:    db,
+		db: db,
 	}
 }
 
-func (e *ExplorerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	elems := e.db.List()
+func (e *ExplorerHandler) List(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-type", "text/html")
+	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+	defer cancel()
+	elems, err := e.db.List(ctx)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 	if len(elems) == 0 {
 		_, _ = w.Write([]byte(`{}`))
 		return
@@ -31,10 +36,10 @@ func (e *ExplorerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	out := make(map[string]any)
 	for _, v := range elems {
 		if v.Value.Value == nil {
-			out[v.Key.MType+"_"+v.Key.ID] = v.Value.Delta
+			out[v.Key.Type+"_"+v.Key.ID] = v.Value.Delta
 			continue
 		}
-		out[v.Key.MType+"_"+v.Key.ID] = v.Value.Value
+		out[v.Key.Type+"_"+v.Key.ID] = v.Value.Value
 	}
 	res, err := json.Marshal(out)
 	if err == nil {
@@ -44,8 +49,4 @@ func (e *ExplorerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	w.WriteHeader(http.StatusServiceUnavailable)
-}
-
-func (e *ExplorerHandler) BaseURL() string {
-	return e.route
 }

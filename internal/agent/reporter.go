@@ -4,20 +4,21 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
-	"sync"
+	"errors"
+	"fmt"
+	"syscall"
+	"time"
 
 	"github.com/ekubyshin/metrics_agent/internal/metrics"
 	"github.com/go-resty/resty/v2"
 )
 
 const (
-	path            = "/update/"
 	contentEncoding = "Content-Encoding"
 )
 
 type Writer interface {
-	Write(data metrics.Metrics) error
-	WriteBatch(data []metrics.Metrics) []error
+	WriteBatch([]metrics.Metrics) error
 }
 
 type Report struct {
@@ -34,35 +35,13 @@ type AgentWriter struct {
 
 func NewAgentReporter(client *resty.Client, endpoint string) *AgentWriter {
 	client.Header.Add("Content-Type", "application/json")
+	client.Header.Add("Accept", "application/json")
+	client.SetTimeout(1 * time.Second)
 	return &AgentWriter{
 		client:   client,
 		endpoint: endpoint,
 		queue:    make(chan Report, 100),
 	}
-}
-
-func (r *AgentWriter) send(data metrics.Metrics) error {
-	bSend, err := json.Marshal(data)
-	if err != nil {
-		return err
-	}
-	compB, err := Compress(bSend)
-	if err == nil {
-		bSend = compB
-	}
-	req := r.client.R().SetBody(bSend)
-	if err == nil {
-		req.SetHeader(contentEncoding, "gzip")
-	}
-	_, err = req.Post("http://" + r.endpoint + path)
-	if err != nil {
-		return err
-	}
-	return err
-}
-
-func (r *AgentWriter) Write(data metrics.Metrics) error {
-	return r.send(data)
 }
 
 func Compress(data []byte) ([]byte, error) {
@@ -82,19 +61,29 @@ func Compress(data []byte) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func (r *AgentWriter) WriteBatch(data []metrics.Metrics) []error {
-	var wg sync.WaitGroup
-	resp := make([]error, 0, len(data))
-	for _, v := range data {
-		wg.Add(1)
-		go func(v metrics.Metrics) {
-			defer wg.Done()
-			err := r.Write(v)
-			if err != nil {
-				resp = append(resp, err)
-			}
-		}(v)
+func (r *AgentWriter) WriteBatch(data []metrics.Metrics) error {
+	bSend, err := json.Marshal(data)
+	if err != nil {
+		return err
 	}
-	wg.Wait()
-	return resp
+	compB, err := Compress(bSend)
+	if err == nil {
+		bSend = compB
+	}
+	req := r.client.R().SetBody(bSend)
+	if err == nil {
+		req.SetHeader(contentEncoding, "gzip")
+	}
+
+	return r.send(req, 1)
+}
+
+func (r *AgentWriter) send(req *resty.Request, i int64) error {
+	_, err := req.Post(fmt.Sprintf("http://%s/updates/", r.endpoint))
+	if err != nil && errors.Is(err, syscall.ECONNREFUSED) && i <= 5 {
+		time.Sleep(time.Duration(i) * time.Second)
+		return r.send(req, i+2)
+	}
+
+	return err
 }
