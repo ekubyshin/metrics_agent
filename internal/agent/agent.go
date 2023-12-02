@@ -32,7 +32,7 @@ func NewMetricsAgent(
 ) *MetricsAgent {
 	collector := NewRuntimeReader(cfg.PollDuration())
 	client := resty.New()
-	reporter := NewAgentReporter(client, cfg.Address.ToString())
+	reporter := NewAgentReporter(client, cfg.Address.ToString(), cfg.Key)
 	return &MetricsAgent{
 		reporter:       reporter,
 		collector:      collector,

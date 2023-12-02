@@ -92,8 +92,11 @@ func (m *DBStorage[K, V]) PutBatch(ctx context.Context, vals []KeyValuer[K, V]) 
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback() //nolint
-
+	defer func() {
+		if err != nil {
+			tx.Rollback() //nolint
+		}
+	}()
 	out := make([]V, 0, len(vals))
 	for _, v := range vals {
 		r, err := sqlx.NamedQueryContext(

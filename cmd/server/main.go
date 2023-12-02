@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	cfg := config.AutoLoadServer()
+	cfg := config.NewServerConfig()
 	l, err := logger.NewLoggerFromEnv(&cfg)
 	if err != nil {
 		panic(err)

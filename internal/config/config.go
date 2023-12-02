@@ -33,6 +33,7 @@ type Config struct {
 	Restore         *bool   `env:"RESTORE"`
 	Env             string  `env:"Env"`
 	DatabaseDSN     *string `env:"DATABASE_DSN"`
+	Key             *string `env:"KEY"`
 }
 
 func (c Config) ReportDuration() time.Duration {
@@ -108,6 +109,11 @@ func (b Builder) WithPostgres(dsn string) Builder {
 	return b
 }
 
+func (b Builder) WithKey(k string) Builder {
+	b.config.Key = &k
+	return b
+}
+
 func (b Builder) Build() Config {
 	return b.config
 }
@@ -166,15 +172,19 @@ func NewAgentConfigFromFlags() Config {
 	endpoint := flag.String("a", "localhost:8080", "endpoint address")
 	reportInterval := flag.Int("r", defaultReportInterval, "report interval")
 	pollInterval := flag.Int("p", defaultPollInterval, "poll interval")
+	key := flag.String("k", "", "secret key")
 	flag.Parse()
-	builer := NewBuilder()
+	builder := NewBuilder()
 	address := &Address{}
 	_ = address.UnmarshalText([]byte(*endpoint))
-	return builer.
+	builder = builder.
 		WithAddress(*address).
 		WithPollInterval(*pollInterval).
-		WithReportInterval(*reportInterval).
-		Build()
+		WithReportInterval(*reportInterval)
+	if *key != "" {
+		builder = builder.WithKey(*key)
+	}
+	return builder.Build()
 }
 
 func NewServerConfigFromFlags() Config {
@@ -182,28 +192,32 @@ func NewServerConfigFromFlags() Config {
 	storeInterval := flag.Int("i", defaultStoreInterval, "store interval")
 	fileStorage := flag.String("f", defaultPath, "store db file path")
 	restore := flag.Bool("r", shouldRestore, "should restore db")
+	key := flag.String("k", "", "secret key")
 	dsn := flag.String("d", "", "postgres dsn")
 	flag.Parse()
-	builer := NewBuilder()
+	builder := NewBuilder()
 	address := &Address{}
 	_ = address.UnmarshalText([]byte(*endpoint))
-	return builer.
+	builder = builder.
 		WithAddress(*address).
 		WithStoreInterval(*storeInterval).
 		WithStoreFilePath(*fileStorage).
 		WithRestore(*restore).
-		WithPostgres(*dsn).
-		Build()
+		WithPostgres(*dsn)
+	if *key != "" {
+		builder = builder.WithKey(*key)
+	}
+	return builder.Build()
 }
 
-func AutoLoadAgent() Config {
+func NewAgentConfig() Config {
 	if _, ok := os.LookupEnv("ADDRESS"); ok {
 		return NewAgentConfigFromENV()
 	}
 	return NewAgentConfigFromFlags()
 }
 
-func AutoLoadServer() Config {
+func NewServerConfig() Config {
 	if _, ok := os.LookupEnv("ADDRESS"); ok {
 		return NewServerConfigFromENV()
 	}
