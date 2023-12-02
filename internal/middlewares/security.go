@@ -12,16 +12,12 @@ import (
 
 type cryptoWriter struct {
 	http.ResponseWriter
-	Writer  io.Writer
-	secret  string
-	status  int
-	UseHash bool
+	Writer io.Writer
+	secret string
+	status int
 }
 
 func (w *cryptoWriter) Write(b []byte) (int, error) {
-	if !w.UseHash {
-		return w.ResponseWriter.Write(b)
-	}
 	h, err := crypto.HashData(b, w.secret)
 	if err == nil {
 		w.ResponseWriter.Header().Set(crypto.HashHeader, string(h))
@@ -64,7 +60,6 @@ func NewSecurity(k string) func(next http.Handler) http.Handler {
 				next.ServeHTTP(sw, r)
 				return
 			}
-			sw.UseHash = true
 			next.ServeHTTP(sw, r)
 		})
 	}
