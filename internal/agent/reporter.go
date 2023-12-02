@@ -36,8 +36,8 @@ type AgentWriter struct {
 }
 
 func NewAgentReporter(client *resty.Client, endpoint string, secret *string) *AgentWriter {
-	client.Header.Add("Content-Type", "application/json")
-	client.Header.Add("Accept", "application/json")
+	client.Header.Set("Content-Type", "application/json")
+	client.Header.Set("Accept", "application/json")
 	client.SetTimeout(1 * time.Second)
 	return &AgentWriter{
 		client:   client,
@@ -77,11 +77,9 @@ func (r *AgentWriter) WriteBatch(data []metrics.Metrics) error {
 	compB, err := Compress(bSend)
 	if err == nil {
 		bSend = compB
-	}
-	req = req.SetBody(bSend)
-	if err == nil {
 		req = req.SetHeader(contentEncoding, "gzip")
 	}
+	req = req.SetBody(bSend)
 
 	return r.send(req, 1)
 }

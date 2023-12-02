@@ -35,7 +35,7 @@ ytest: $(METRICSTEST) server agent
 	'-agent-binary-path=cmd/agent/agent' \
 	'-binary-path=cmd/server/server' \
 	'-server-port=8080' \
-	'-test.run=^TestIteration14$\ \
+	'-test.run=^TestIteration14$\' \
 	'-key=123' \
 	'-file-storage-path=internal/storage/test/test2.json' \
 	'-database-dsn=$(DB_DSN)'

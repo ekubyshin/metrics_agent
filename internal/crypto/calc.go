@@ -5,7 +5,7 @@ import (
 	"crypto/sha256"
 )
 
-const HashHeader = "HashSHA256"
+const HashHeader = "Hash"
 
 func HashData(d []byte, k string) ([]byte, error) {
 	h := hmac.New(sha256.New, []byte(k))
