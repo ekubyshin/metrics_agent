@@ -69,7 +69,7 @@ func TestAgentWriter_WriteBatch(t *testing.T) {
 				fmt.Sprintf("http://%s/updates/", endPoint),
 				resp,
 			)
-			r := NewAgentReporter(client, endPoint)
+			r := NewAgentReporter(client, endPoint, nil)
 			err := r.WriteBatch(tt.args.data)
 			assert.NoError(t, err)
 		})

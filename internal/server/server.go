@@ -30,7 +30,11 @@ func NewServer(
 	router.Use(mw.NewRequestLogger(logger))
 	router.Use(mw.NewResponseLogger(logger))
 	router.Use(mw.GzipReader)
+	if cfg.Key != nil {
+		router.Use(mw.NewSecurity(*cfg.Key))
+	}
 	router.Use(mw.GzipHandler)
+
 	RegisterRoutes(router, st)
 
 	return &ChiServer{
