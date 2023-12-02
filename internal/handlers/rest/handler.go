@@ -50,7 +50,6 @@ func (h *RestHandler) Update(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(res)
 }
 
@@ -81,7 +80,6 @@ func (h *RestHandler) Updates(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(s)
 }
 
@@ -117,7 +115,6 @@ func (h *RestHandler) Value(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(res)
 }
 
