@@ -17,12 +17,10 @@ type cryptoWriter struct {
 	secret string
 }
 
-const hashHeader = "Hashsha256"
-
 func (w cryptoWriter) Write(b []byte) (int, error) {
 	h, err := crypto.HashData(b, w.secret)
 	if err == nil {
-		w.ResponseWriter.Header().Add(hashHeader, string(h))
+		w.ResponseWriter.Header().Add(crypto.HashHeader, string(h))
 	}
 	return w.ResponseWriter.Write(b)
 }
@@ -34,7 +32,7 @@ func (w cryptoWriter) WriteHeader(c int) {
 func NewSecurity(k string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			sum := r.Header.Get(hashHeader)
+			sum := r.Header.Get(crypto.HashHeader)
 			sw := cryptoWriter{ResponseWriter: w, secret: k}
 			if sum == "" {
 				next.ServeHTTP(sw, r)

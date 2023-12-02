@@ -72,7 +72,7 @@ func (r *AgentWriter) WriteBatch(data []metrics.Metrics) error {
 	req := r.client.R()
 	hash, err := r.hashData(bSend)
 	if err == nil {
-		req = req.SetHeader("Hashsha256", string(hash))
+		req = req.SetHeader(crypto.HashHeader, string(hash))
 	}
 	compB, err := Compress(bSend)
 	if err == nil {
